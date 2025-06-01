@@ -41,8 +41,8 @@ export function Footer() {
             {/* 情報アイコン */}
             <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             {/* 免責事項テキスト */}
-            <p className="text-xs text-muted-foreground text-left max-w-md">
-              免責事項: 本サービスの解析結果はAIによるものであり、あくまで参考情報です。実際の求人票の内容や会社の状況は、直接確認することをお勧めします。最終的な判断はご自身で行ってください。
+            <p className="text-xs text-muted-foreground text-left max-w-md font-medium">
+              <span className="font-bold">重要な免責事項:</span> 本サービスの解析結果はAIによるものであり、あくまで参考情報です。AIの解釈は可能性の一つに過ぎず、必ずしも事実を反映しているわけではありません。実際の求人票の内容や会社の状況は、直接確認することを強くお勧めします。最終的な判断は必ずご自身で行ってください。
             </p>
           </div>
         </div>

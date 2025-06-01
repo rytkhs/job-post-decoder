@@ -47,8 +47,7 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardContent,
-  CardFooter
+  CardContent
 } from './ui/card';
 
 /**

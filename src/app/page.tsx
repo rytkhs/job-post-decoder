@@ -39,10 +39,8 @@ interface LLMResponse {
 export default function Home() {
   /**
    * アプリケーションの状態管理
-   * 入力された求人票テキスト、ローディング状態、エラー、解析結果を管理する
+   * ローディング状態、エラー、解析結果を管理する
    */
-  // 入力された求人票テキストを保持
-  const [jobPostingText, setJobPostingText] = useState('');
   // APIリクエスト中のローディング状態を管理
   const [isLoading, setIsLoading] = useState(false);
   // エラーメッセージを管理
@@ -57,7 +55,6 @@ export default function Home() {
    */
   const handleSubmit = async (text: string) => {
     // 状態を初期化
-    setJobPostingText(text);
     setIsLoading(true); // ローディング状態を開始
     setError(null); // 前回のエラーをクリア
     setDecodingResult(null); // 前回の結果をクリア
