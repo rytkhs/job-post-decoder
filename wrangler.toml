@@ -1,0 +1,15 @@
+[build]
+command = "npm run pages:build"
+cwd = "."
+dist = ".vercel/output/static"
+
+[site]
+bucket = ".vercel/output/static"
+
+[env.production]
+name = "job-post-decoder"
+route = ""
+
+[env.staging]
+name = "job-post-decoder-staging"
+route = ""
