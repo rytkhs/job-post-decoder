@@ -103,8 +103,6 @@ export function AnalysisProgress({ progress, animated = true }: AnalysisProgress
             const isCurrent = index === currentStepIndex;
             const isPending = index > currentStepIndex;
 
-            const IconComponent = step.icon;
-
             return (
               <div
                 key={step.id}

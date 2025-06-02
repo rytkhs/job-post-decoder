@@ -96,7 +96,7 @@ export function AnimatedResultCard({
             text-lg font-medium flex-1 transition-colors duration-200
             ${isHovered ? 'text-primary' : ''}
           `}>
-            "{finding.original_phrase}"
+            &quot;{finding.original_phrase}&quot;
           </CardTitle>
           <div className="flex items-center gap-2 flex-shrink-0">
             <SeverityBadge severity={finding.severity} />

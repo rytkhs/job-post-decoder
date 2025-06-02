@@ -18,7 +18,7 @@ global.fetch = jest.fn();
 global.AbortController = jest.fn(() => ({
   abort: jest.fn(),
   signal: { aborted: false }
-})) as any;
+})) as unknown as typeof AbortController;
 
 // navigator.onLine のモック
 Object.defineProperty(navigator, 'onLine', {

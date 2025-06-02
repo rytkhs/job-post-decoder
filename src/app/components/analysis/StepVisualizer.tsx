@@ -145,9 +145,9 @@ export function StepVisualizer({
         ? 'flex flex-col items-center space-y-2'
         : 'flex items-center space-x-4'
     } ${className}`}>
-      {STEPS.map((step, index) => {
+      {STEPS.map((step) => {
         const status = getStepStatus(step.id, currentStep);
-        const isLast = index === STEPS.length - 1;
+        const isLast = step.id === STEPS[STEPS.length - 1].id;
 
         return (
           <React.Fragment key={step.id}>
@@ -227,7 +227,7 @@ export function CompactStepVisualizer({
     <div className={`flex items-center space-x-2 ${className}`}>
       {/* プログレスドット */}
       <div className="flex space-x-1">
-        {STEPS.map((step, index) => {
+        {STEPS.map((step) => {
           const status = getStepStatus(step.id, currentStep);
 
           return (

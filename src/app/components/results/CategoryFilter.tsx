@@ -330,7 +330,7 @@ export function useCategoryFilter(findings: EnhancedFinding[]) {
       const missingCategories = newAvailableCategories.filter(cat => !validCategories.includes(cat));
       return [...validCategories, ...missingCategories];
     });
-  }, [findings.length]); // findingsの長さのみを監視
+  }, [findings]); // findingsを直接監視
 
   const filteredFindings = filterFindingsByCategory(findings, selectedCategories);
 
