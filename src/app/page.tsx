@@ -1,103 +1,113 @@
-import Image from "next/image";
+'use client';
 
+/**
+ * メインページコンポーネント
+ * 求人票デコーダーアプリケーションのメインページを構成する
+ * フォーム入力、API通信、結果表示の流れを管理する
+ */
+
+import { useState } from 'react';
+import { JobPostingForm } from './components/JobPostingForm';
+import { DecodingResult } from './components/DecodingResult';
+
+/**
+ * 解析結果の個々の発見事項を表すインターフェース
+ * @interface Finding
+ * @property {string} original_phrase - 求人票から抽出された原文
+ * @property {string[]} potential_realities - 原文の背後にある可能性のある本音のリスト
+ * @property {string[]} points_to_check - 面接時などに確認すべきポイントのリスト
+ */
+interface Finding {
+  original_phrase: string;
+  potential_realities: string[];
+  points_to_check: string[];
+}
+
+/**
+ * LLMからのレスポンス全体を表すインターフェース
+ * @interface LLMResponse
+ * @property {Finding[]} findings - 発見事項の配列
+ */
+interface LLMResponse {
+  findings: Finding[];
+}
+
+/**
+ * メインページコンポーネント
+ * @returns {JSX.Element} - メインページのUI要素
+ */
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  /**
+   * アプリケーションの状態管理
+   * ローディング状態、エラー、解析結果を管理する
+   */
+  // APIリクエスト中のローディング状態を管理
+  const [isLoading, setIsLoading] = useState(false);
+  // エラーメッセージを管理
+  const [error, setError] = useState<string | null>(null);
+  // APIからの解析結果を管理
+  const [decodingResult, setDecodingResult] = useState<LLMResponse | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  /**
+   * フォーム送信時の処理ハンドラー
+   * 入力された求人票テキストをAPIに送信し、結果を取得する
+   * @param {string} text - 入力された求人票テキスト
+   */
+  const handleSubmit = async (text: string) => {
+    // 状態を初期化
+    setIsLoading(true); // ローディング状態を開始
+    setError(null); // 前回のエラーをクリア
+    setDecodingResult(null); // 前回の結果をクリア
+    
+    try {
+      // APIリクエストを送信
+      const response = await fetch('/api/decode-job-posting', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }), // 求人票テキストをJSON形式で送信
+      });
+      
+      // APIレスポンスをJSONとして解析
+      const data = await response.json();
+      
+      // レスポンスが正常でない場合はエラーを投げる
+      if (!response.ok) {
+        throw new Error(data.error || 'デコードに失敗しました。');
+      }
+      
+      // 成功時は結果を状態に設定
+      setDecodingResult(data);
+    } catch (err) {
+      // エラー発生時の処理
+      console.error('Error decoding job posting:', err);
+      // エラーメッセージを状態に設定
+      setError(err instanceof Error ? err.message : '予期せぬエラーが発生しました。');
+    } finally {
+      // 処理完了時は必ずローディング状態を終了
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * メインページのUIをレンダリング
+   */
+  return (
+    <div className="flex flex-col gap-8">
+      {/* 入力フォームセクション */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4 text-center">求人票のテキストを入力</h2>
+        {/* 求人票入力フォームコンポーネント */}
+        <JobPostingForm onSubmit={handleSubmit} isLoading={isLoading} />
+      </section>
+      
+      {/* 解析結果表示セクション */}
+      <DecodingResult 
+        result={decodingResult} 
+        isLoading={isLoading} 
+        error={error} 
+      />
     </div>
   );
 }
