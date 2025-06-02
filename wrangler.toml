@@ -1,0 +1,3 @@
+name = "job-post-decoder"
+compatibility_date = "2025-06-02"
+compatibility_flags = [ "nodejs_compat" ]
