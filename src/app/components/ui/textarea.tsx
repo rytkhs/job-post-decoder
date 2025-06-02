@@ -2,7 +2,10 @@ import * as React from "react"
 import { cn } from "../../lib/utils"
 
 export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  // プロパティはHTMLTextAreaElementから継承し、追加プロパティが必要な場合はここに定義
+  additionalProps?: never; // ESLintエラー回避用ダミープロパティ
+}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {

@@ -7,29 +7,29 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { SeverityBadge, getSeverityOrder } from './SeverityBadge';
 import {
   TrendingUp,
   AlertTriangle,
-  CheckCircle,
-  Target,
+  Lightbulb,
   BarChart3,
   PieChart,
-  Lightbulb,
-  Shield,
-  Users,
-  Clock,
+  ShieldCheck,
   DollarSign,
-  Building
+  Clock,
+  Building,
+  Target,
+  CheckCircle
 } from 'lucide-react';
 import {
   EnhancedAPIResponse,
   EnhancedFinding,
-  FindingCategory,
-  Severity
+  FindingCategory
 } from '../../types/api';
+
+// Severityの型を直接定義（APIからのインポートがエラーになるため）
+type Severity = 'high' | 'medium' | 'low';
 
 /**
  * InsightsSummaryコンポーネントのプロパティ
@@ -202,8 +202,8 @@ export function InsightsSummary({
 
   // 最も懸念の多いカテゴリを特定
   const topConcernCategory = Object.entries(categoryStats)
-    .filter(([_, stats]) => stats.count > 0)
-    .sort(([_, a], [__, b]) => b.count - a.count)[0];
+    .filter(([, stats]) => stats.count > 0)
+    .sort(([, a], [, b]) => b.count - a.count)[0];
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -211,7 +211,7 @@ export function InsightsSummary({
       <Card className="overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+            <ShieldCheck className="h-5 w-5" />
             総合リスク評価
           </CardTitle>
         </CardHeader>
@@ -267,8 +267,8 @@ export function InsightsSummary({
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(categoryStats)
-              .filter(([_, stats]) => stats.count > 0)
-              .sort(([_, a], [__, b]) => b.count - a.count)
+              .filter(([, stats]) => stats.count > 0)
+              .sort(([, a], [, b]) => b.count - a.count)
               .map(([category, stats]) => {
                 const config = CATEGORY_CONFIG[category as FindingCategory];
                 const Icon = config.icon;
@@ -290,7 +290,7 @@ export function InsightsSummary({
 
                       <div className="space-y-2">
                         {Object.entries(stats.severities)
-                          .filter(([_, count]) => count > 0)
+                          .filter(([, count]) => count > 0)
                           .map(([severity, count]) => {
                             const severityConfig = SEVERITY_CONFIG[severity as Severity];
                             return (
@@ -337,7 +337,7 @@ export function InsightsSummary({
         <CardContent>
           <div className="space-y-4">
             {Object.entries(severityStats)
-              .filter(([_, count]) => count > 0)
+              .filter(([, count]) => count > 0)
               .sort(([a], [b]) => getSeverityOrder(b as Severity) - getSeverityOrder(a as Severity))
               .map(([severity, count]) => {
                 const config = SEVERITY_CONFIG[severity as Severity];

@@ -305,31 +305,35 @@ export const useAppStore = create<AppState>()(
     {
       name: 'job-decoder-app-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        // 永続化する状態を選択
-        analysisHistory: state.analysisHistory,
-        feedbackHistory: state.feedbackHistory,
-        customQuestions: state.customQuestions,
-        selectedQuestions: state.selectedQuestions,
-        enableAnimations: state.enableAnimations,
-        showAdvancedProgress: state.showAdvancedProgress,
-        isDarkMode: state.isDarkMode,
-        isCompactView: state.isCompactView,
-        activeTab: state.activeTab
-      }),
-      // Set型のシリアライゼーション対応
-      serialize: (state) => {
-        const serializedState = {
-          ...state,
+      partialize: (state) => {
+        // 永続化するステートを選択
+        const persistedState = {
+          enableAnimations: state.enableAnimations,
+          showAdvancedProgress: state.showAdvancedProgress,
+          isDarkMode: state.isDarkMode,
+          isCompactView: state.isCompactView,
+          activeTab: state.activeTab,
+          // Set型を配列に変換して保存
           selectedCategories: Array.from(state.selectedCategories)
         };
-        return JSON.stringify(serializedState);
+        return persistedState;
       },
-      deserialize: (str) => {
-        const parsed = JSON.parse(str);
-        return {
-          ...parsed,
-          selectedCategories: new Set(parsed.selectedCategories || [])
+      // zustand v5ではカスタムのserialize/deserializeを使用せず、
+      // hydrateコールバックでSet型を復元
+      onRehydrateStorage: (_state) => {
+        // ストレージからのデータがロードされた後に実行される
+        return (restoredState, error) => {
+          if (error) {
+            console.error('Error rehydrating state:', error);
+            return;
+          }
+          
+          if (restoredState && Array.isArray(restoredState.selectedCategories)) {
+            // Set型を復元
+            useAppStore.setState({
+              selectedCategories: new Set(restoredState.selectedCategories)
+            });
+          }
         };
       }
     }
@@ -347,7 +351,7 @@ export const useAnalysisSelectors = () => {
     getEnhancedFindings: (): EnhancedFinding[] => {
       if (!store.currentResult?.findings) return [];
 
-      return store.currentResult.findings.map((finding, index) => {
+      return store.currentResult.findings.map((finding) => {
         // 既にEnhancedFindingの場合はそのまま返す
         if ('severity' in finding && 'category' in finding) {
           return finding as EnhancedFinding;
@@ -367,7 +371,23 @@ export const useAnalysisSelectors = () => {
 
     // フィルタリングされた結果を取得
     getFilteredFindings: (): EnhancedFinding[] => {
-      const findings = useAnalysisSelectors().getEnhancedFindings();
+      const store = useAppStore.getState();
+      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: any) => {
+        // 既にEnhancedFindingの場合はそのまま返す
+        if ('severity' in finding && 'category' in finding) {
+          return finding as EnhancedFinding;
+        }
+
+        // 基本的なFindingの場合はデフォルト値で拡張
+        return {
+          ...finding,
+          severity: 'medium' as const,
+          category: 'other' as const,
+          confidence: 0.7,
+          related_keywords: [],
+          suggested_questions: []
+        };
+      }) : [];
 
       return findings.filter(finding => {
         // カテゴリフィルター
@@ -386,7 +406,7 @@ export const useAnalysisSelectors = () => {
           return (
             finding.text.toLowerCase().includes(query) ||
             finding.reason.toLowerCase().includes(query) ||
-            finding.related_keywords?.some(keyword =>
+            finding.related_keywords?.some((keyword: string) =>
               keyword.toLowerCase().includes(query)
             )
           );
@@ -398,7 +418,23 @@ export const useAnalysisSelectors = () => {
 
     // 統計情報を取得
     getStatistics: () => {
-      const findings = useAnalysisSelectors().getEnhancedFindings();
+      const store = useAppStore.getState();
+      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: any) => {
+        // 既にEnhancedFindingの場合はそのまま返す
+        if ('severity' in finding && 'category' in finding) {
+          return finding as EnhancedFinding;
+        }
+
+        // 基本的なFindingの場合はデフォルト値で拡張
+        return {
+          ...finding,
+          severity: 'medium' as const,
+          category: 'other' as const,
+          confidence: 0.7,
+          related_keywords: [],
+          suggested_questions: []
+        };
+      }) : [];
 
       const categoryStats = findings.reduce((acc, finding) => {
         acc[finding.category] = (acc[finding.category] || 0) + 1;

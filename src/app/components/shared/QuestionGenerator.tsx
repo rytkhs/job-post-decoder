@@ -6,12 +6,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+// framer-motionは別の実装で必要になる可能性がある場合はコメント化
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Textarea } from '../ui/textarea';
-import { Input } from '../ui/input';
+// Tabsコンポーネントは現在使用されていないためコメント化
 import {
   MessageSquare,
   Plus,
@@ -25,7 +26,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import { InterviewQuestions, FindingCategory, EnhancedFinding } from '../../types/api';
+import { InterviewQuestions, EnhancedFinding } from '../../types/api';
 
 /**
  * QuestionGeneratorコンポーネントのプロパティ
@@ -33,7 +34,7 @@ import { InterviewQuestions, FindingCategory, EnhancedFinding } from '../../type
 interface QuestionGeneratorProps {
   /** 面接質問データ */
   interviewQuestions: InterviewQuestions[];
-  /** 解析結果（追加質問生成用） */
+  /** 解析結果の詳細リスト */
   findings?: EnhancedFinding[];
   /** カスタムクラス名 */
   className?: string;
@@ -111,7 +112,6 @@ const STORAGE_KEYS = {
  */
 export function QuestionGenerator({
   interviewQuestions,
-  findings = [],
   className = ''
 }: QuestionGeneratorProps) {
   const [questionItems, setQuestionItems] = useState<QuestionItem[]>([]);
@@ -134,9 +134,9 @@ export function QuestionGenerator({
 
     if (savedQuestions) {
       try {
-        const savedData = JSON.parse(savedQuestions);
+        const savedData = JSON.parse(savedQuestions) as QuestionItem[];
         restoredItems = baseItems.map(item => {
-          const saved = savedData.find((s: any) => s.id === item.id);
+          const saved = savedData.find((s) => s.id === item.id);
           return saved ? { ...item, isSelected: saved.isSelected } : item;
         });
       } catch (error) {

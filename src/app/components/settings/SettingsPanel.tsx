@@ -7,57 +7,46 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/appStore';
-import { useDeviceDetection } from '../layout/ResponsiveLayout';
+import { useDeviceDetection } from '@/app/utils/deviceDetection';
 import {
+  X,
   Settings,
   Palette,
-  Monitor,
-  Moon,
-  Sun,
-  Smartphone,
+  Zap,
+  Eye,
+  Database,
+  Shield,
+  Info,
+  AlertTriangle,
   Download,
   Upload,
   Trash2,
   RotateCcw,
-  X,
-  AlertTriangle,
-  Info,
-  Zap,
-  Eye,
-  Database,
-  Shield
+  Sun,
+  Moon,
+  Monitor,
+  Smartphone
 } from 'lucide-react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent
-} from '../ui/card';
+// インポートは実際に使用されるモジュールのみ残す
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
+// Progress は使用されていないため削除
 import { Switch } from '../ui/switch';
-import { Slider } from '../ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+// Slider は使用されていないため削除
+// Select関連コンポーネントは使用されていないため削除
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
+// Textarea は使用されていないため削除
 
 /**
  * 設定カテゴリ
  */
 type SettingsCategory = 'appearance' | 'behavior' | 'data' | 'privacy' | 'advanced';
 
-/**
- * テーマオプション
- */
-type ThemeOption = 'light' | 'dark' | 'system';
+// ThemeOption型は使用されていないため削除
 
-/**
- * 言語オプション
- */
-type LanguageOption = 'ja' | 'en';
+// LanguageOption型は使用されていないため削除
 
 /**
  * 設定パネルのプロパティ

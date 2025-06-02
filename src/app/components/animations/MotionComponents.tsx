@@ -5,7 +5,7 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, useInView } from 'framer-motion';
 
 /**
  * 基本的なアニメーション設定
@@ -401,14 +401,10 @@ interface HoverScaleProps {
 export function HoverScale({ children, scale = 1.05, className }: HoverScaleProps) {
   return (
     <motion.div
+      className={className}
       whileHover={{ scale }}
       whileTap={{ scale: scale * 0.95 }}
-      transition={{
-        type: 'spring',
-        damping: 20,
-        stiffness: 300
-      }}
-      className={className}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {children}
     </motion.div>
@@ -513,7 +509,7 @@ interface AnimatedCounterProps {
   className?: string;
 }
 
-export function AnimatedCounter({ from, to, duration = 1, className }: AnimatedCounterProps) {
+export function AnimatedCounter({ from, to, className }: AnimatedCounterProps) {
   return (
     <motion.span
       initial={{ opacity: 0 }}
@@ -525,10 +521,11 @@ export function AnimatedCounter({ from, to, duration = 1, className }: AnimatedC
         initial={{ y: from }}
         animate={{ y: to }}
         transition={{
-          duration,
-          ease: animationConfig.easing
+          type: "spring",
+          damping: 25,
+          stiffness: 200
         }}
-        onUpdate={(latest) => {
+        onUpdate={() => {
           // カウンターの値を更新（実装は使用側で行う）
         }}
       >
@@ -582,6 +579,56 @@ export function Shake({ children, trigger, className }: ShakeProps) {
         transition: { duration: 0.5 }
       } : {}}
       className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/**
+ * スクロール連動アニメーション
+ */
+export interface ScrollRevealProps {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+}
+
+export function ScrollReveal({
+  children,
+  className,
+  delay = 0,
+  direction = 'up'
+}: ScrollRevealProps) {
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const variants = {
+    hidden: {
+      opacity: 0,
+      y: direction === 'up' ? 50 : direction === 'down' ? -50 : 0,
+      x: direction === 'left' ? 50 : direction === 'right' ? -50 : 0,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      x: 0,
+    }
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      variants={variants}
+      transition={{
+        duration: 0.6,
+        delay,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
     >
       {children}
     </motion.div>

@@ -16,8 +16,8 @@ import { FeedbackType } from '../../types/api';
 interface FeedbackButtonProps {
   /** 発見事項のID */
   findingId: string;
-  /** 現在のフィードバック状態 */
-  currentFeedback?: FeedbackType | null;
+  /** 初期フィードバック状態 */
+  initialFeedback?: FeedbackType | null;
   /** フィードバック送信時のコールバック */
   onFeedback: (findingId: string, feedback: FeedbackType) => void;
   /** ボタンサイズ */
@@ -109,7 +109,7 @@ export function loadFeedbackFromStorage(findingId: string): FeedbackType | null 
  */
 export const FeedbackButton = memo<FeedbackButtonProps>(function FeedbackButton({
   findingId,
-  currentFeedback = null,
+  initialFeedback = null,
   onFeedback,
   size = 'sm',
   disabled = false,
@@ -157,8 +157,8 @@ export const FeedbackButton = memo<FeedbackButtonProps>(function FeedbackButton(
       {(Object.keys(FEEDBACK_CONFIG) as FeedbackType[]).map((feedbackType) => {
         const config = FEEDBACK_CONFIG[feedbackType];
         const IconComponent = config.icon;
-        const isActive = currentFeedback === feedbackType;
-        const isOtherActive = currentFeedback && currentFeedback !== feedbackType;
+        const isActive = initialFeedback === feedbackType;
+        const isOtherActive = initialFeedback && initialFeedback !== feedbackType;
 
         return (
           <Button

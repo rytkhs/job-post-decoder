@@ -129,7 +129,7 @@ export class NetworkErrorClassifier {
   /**
    * エラーを分類
    */
-  static classifyError(error: any, response?: Response): NetworkErrorDetails {
+  static classifyError(error: unknown, response?: Response): NetworkErrorDetails {
     const timestamp = new Date().toISOString();
     let type: NetworkErrorType;
     let message: string;
@@ -137,7 +137,15 @@ export class NetworkErrorClassifier {
     let statusText: string | undefined;
     let isRetryable = false;
 
-    if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+    // error変数がオブジェクトかつ必要なプロパティを持っているか型ガードで確認
+    if (
+      typeof error === 'object' && 
+      error !== null && 
+      (
+        ('name' in error && (error as {name: string}).name === 'AbortError') || 
+        ('message' in error && typeof (error as {message?: string}).message === 'string' && (error as {message: string}).message.includes('timeout'))
+      )
+    ) {
       type = NetworkErrorType.TIMEOUT;
       message = 'リクエストがタイムアウトしました';
       isRetryable = true;
@@ -166,13 +174,15 @@ export class NetworkErrorClassifier {
         message = `予期しないエラーが発生しました (${status})`;
         isRetryable = false;
       }
-    } else if (error.message?.includes('fetch')) {
+    } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as {message?: string}).message === 'string' && (error as {message: string}).message.includes('fetch')) {
       type = NetworkErrorType.NETWORK_ERROR;
       message = 'ネットワークエラーが発生しました';
       isRetryable = true;
     } else {
       type = NetworkErrorType.UNKNOWN;
-      message = error.message || '予期しないエラーが発生しました';
+      message = typeof error === 'object' && error !== null && 'message' in error ? 
+        (error as {message?: string}).message || '予期しないエラーが発生しました' : 
+        '予期しないエラーが発生しました';
       isRetryable = false;
     }
 
@@ -491,6 +501,90 @@ export function useRetryableFetch() {
     error,
     retryCount,
     retry
+  };
+}
+
+/**
+ * リトライ可能なリクエストを作成
+ */
+/**
+ * リトライオプションの型定義
+ */
+export interface RetryOptions {
+  /** 最大リトライ回数 */
+  maxRetries?: number;
+  /** 初期遅延時間(ミリ秒) */
+  initialDelay?: number;
+  /** バックオフ係数 */
+  backoffFactor?: number;
+  /** リトライ可能なエラーの判定関数 */
+  isRetryable?: (error: unknown) => boolean;
+}
+
+/**
+ * 指数関数的バックオフでリトライする関数
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    initialDelay = 500,
+    backoffFactor = 2,
+    isRetryable = (error: unknown) => {
+      // ネットワークエラー分類ユーティリティを使用してリトライ可能か判定
+      const errorDetails = NetworkErrorClassifier.classifyError(error);
+      return errorDetails.isRetryable;
+    }
+  } = options;
+
+  let lastError: unknown;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      // リトライ可能かチェック
+      if (!isRetryable(error) || attempt >= maxRetries - 1) {
+        throw error;
+      }
+      
+      // 指数関数的バックオフで待機
+      const delay = initialDelay * Math.pow(backoffFactor, attempt);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  // ここには到達しないはずだが、TypeScriptの実装上必要
+  throw lastError;
+}
+
+export function createRetryableRequest<T>(
+  requestFn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  return retryWithBackoff(requestFn, options);
+}
+
+/**
+ * ネットワークエラーハンドラーのファクトリー関数
+ */
+export function createNetworkErrorHandler(options: {
+  onError?: (error: NetworkError) => void;
+  onRetry?: (attempt: number, error: NetworkError) => void;
+  onSuccess?: () => void;
+} = {}) {
+  return {
+    handleError: (error: unknown): NetworkError => {
+      const networkError = error instanceof NetworkError ? error : new NetworkError(
+        NetworkErrorClassifier.classifyError(error)
+      );
+      options.onError?.(networkError);
+      return networkError;
+    }
   };
 }
 
