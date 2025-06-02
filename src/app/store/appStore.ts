@@ -8,6 +8,7 @@ import {
   EnhancedAPIResponse,
   LLMResponse,
   EnhancedFinding,
+  Finding,
   FindingCategory,
   FeedbackType,
   AnalysisProgress
@@ -320,7 +321,7 @@ export const useAppStore = create<AppState>()(
       },
       // zustand v5ではカスタムのserialize/deserializeを使用せず、
       // hydrateコールバックでSet型を復元
-      onRehydrateStorage: (_state) => {
+      onRehydrateStorage: () => {
         // ストレージからのデータがロードされた後に実行される
         return (restoredState, error) => {
           if (error) {
@@ -372,7 +373,7 @@ export const useAnalysisSelectors = () => {
     // フィルタリングされた結果を取得
     getFilteredFindings: (): EnhancedFinding[] => {
       const store = useAppStore.getState();
-      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: any) => {
+      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
         // 既にEnhancedFindingの場合はそのまま返す
         if ('severity' in finding && 'category' in finding) {
           return finding as EnhancedFinding;
@@ -404,8 +405,8 @@ export const useAnalysisSelectors = () => {
         if (store.searchQuery) {
           const query = store.searchQuery.toLowerCase();
           return (
-            finding.text.toLowerCase().includes(query) ||
-            finding.reason.toLowerCase().includes(query) ||
+            finding.original_phrase.toLowerCase().includes(query) ||
+            finding.potential_realities.some(reality => reality.toLowerCase().includes(query)) ||
             finding.related_keywords?.some((keyword: string) =>
               keyword.toLowerCase().includes(query)
             )
@@ -419,7 +420,7 @@ export const useAnalysisSelectors = () => {
     // 統計情報を取得
     getStatistics: () => {
       const store = useAppStore.getState();
-      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: any) => {
+      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
         // 既にEnhancedFindingの場合はそのまま返す
         if ('severity' in finding && 'category' in finding) {
           return finding as EnhancedFinding;
