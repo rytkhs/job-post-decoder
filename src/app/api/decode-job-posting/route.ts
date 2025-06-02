@@ -3,6 +3,8 @@
  * 求人票テキストを受け取り、AIを使用して解析し、結果を返すAPIルート
  */
 
+export const runtime = 'edge';
+
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 

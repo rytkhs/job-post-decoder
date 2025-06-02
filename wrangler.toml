@@ -1,10 +1,8 @@
 [build]
 command = "npm run pages:build"
 cwd = "."
-dist = ".vercel/output/static"
 
-[site]
-bucket = ".vercel/output/static"
+pages_build_output_dir = ".vercel/output/static"
 
 [env.production]
 name = "job-post-decoder"
