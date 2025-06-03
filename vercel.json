@@ -6,11 +6,11 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "runtime": "@vercel/node",
-      "maxDuration": 300
+      "maxDuration": 60
     },
     "src/app/api/decode-job-posting/route.ts": {
       "runtime": "edge",
-      "maxDuration": 300
+      "maxDuration": 60
     }
   },
   "headers": [
