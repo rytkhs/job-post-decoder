@@ -6,7 +6,7 @@
  */
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   AlertCircle, // エラーアイコン
   Loader2,      // ローディングアイコン
@@ -28,9 +28,9 @@ import { AnalysisProgress } from './analysis/AnalysisProgress';
 import { CompactStepVisualizer } from './analysis/StepVisualizer';
 import { SeverityBadge, getSeverityOrder } from './results/SeverityBadge';
 import { AnimatedResultList } from './results/AnimatedResultCard';
-import { CategoryFilter, useCategoryFilter } from './results/CategoryFilter';
+import { CategoryFilter } from './results/CategoryFilter';
 import { QuestionGenerator } from './shared/QuestionGenerator';
-import { InsightsSummary } from './results/InsightsSummary';
+import { InterleaveDisplay } from './results/InterleaveDisplay';
 import { saveFeedbackToStorage, loadFeedbackFromStorage } from './shared/FeedbackButton';
 import { useAppStore } from '../store/appStore';
 import {
@@ -39,7 +39,8 @@ import {
   EnhancedFinding,
   Finding,
   AnalysisProgress as AnalysisProgressType,
-  FeedbackType
+  FeedbackType,
+  FindingCategory
 } from '../types/api';
 
 /**
@@ -55,41 +56,40 @@ interface DecodingResultProps {
 }
 
 /**
- * カテゴリ名の日本語マッピング
+ * カテゴリラベルの定義
  */
-const CATEGORY_LABELS = {
+const CATEGORY_LABELS: Record<FindingCategory, string> = {
   compensation: '💰 給与・待遇',
   worklife: '⏰ 労働環境',
   culture: '🏢 企業文化',
   growth: '📈 成長機会',
   other: '📋 その他'
-} as const;
+};
 
 /**
- * 基本的なFindingをEnhancedFindingに変換する関数
+ * 互換性のためのFinding強化関数
  */
 function enhanceFinding(finding: EnhancedFinding | Finding): EnhancedFinding {
-  // 既にEnhancedFindingの場合はそのまま返す
-  if ('severity' in finding && 'category' in finding) {
+  if ('severity' in finding) {
     return finding as EnhancedFinding;
   }
 
-  // 基本的なFindingの場合はデフォルト値で拡張
+  // 基本的なFindingを拡張
   return {
     ...finding,
-    severity: 'medium' as const,
-    category: 'other' as const,
+    severity: 'medium',
+    category: 'other',
     confidence: 0.7,
     related_keywords: [],
     suggested_questions: []
-  };
+  } as EnhancedFinding;
 }
 
 /**
- * レスポンスがEnhancedAPIResponseかどうかを判定する関数
+ * 拡張レスポンスかどうかを判定する型ガード
  */
 function isEnhancedResponse(result: LLMResponse | EnhancedAPIResponse | null): result is EnhancedAPIResponse {
-  return result !== null && 'summary' in result && 'metadata' in result;
+  return result !== null && 'summary' in result;
 }
 
 /**
@@ -98,18 +98,18 @@ function isEnhancedResponse(result: LLMResponse | EnhancedAPIResponse | null): r
 export function DecodingResult({ result, isLoading, error, analysisProgress }: DecodingResultProps) {
   // Zustandストアから状態とアクションを取得
   const {
-    // UI状態
+    // 状態の取得
     activeTab,
     enableAnimations,
     showAdvancedProgress,
-
-    // フィードバック状態
+    selectedCategories,
     feedbackHistory,
+    originalText,
 
-    // アクション
+    // アクションの取得
     setActiveTab,
-    toggleAnimations,
     toggleAdvancedProgress,
+    setSelectedCategories,
     setFeedback
   } = useAppStore();
 
@@ -117,22 +117,39 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
   const mainContentRef = useRef<HTMLDivElement>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
 
-  // 解析結果の処理
-  const enhancedFindings = result?.findings
-    ? result.findings.map((finding) => enhanceFinding(finding))
-    : [];
+  // 結果の処理と型チェック
+  const processedResult = useMemo(() => {
+    if (!result) return null;
 
-  // 重要度順でソート
-  const sortedFindings = [...enhancedFindings].sort((a, b) =>
-    getSeverityOrder(b.severity) - getSeverityOrder(a.severity)
-  );
+    const isEnhanced = isEnhancedResponse(result);
+    const findings = result.findings || [];
 
-  // カテゴリフィルター機能（ローカル状態として保持）
-  const {
-    selectedCategories,
-    setSelectedCategories,
-    filteredFindings
-  } = useCategoryFilter(sortedFindings);
+    // Enhanced版の場合のみfindingsをEnhancedFindingとして扱う
+    const enhancedFindings = isEnhanced
+      ? (findings as EnhancedFinding[])
+      : findings.map(enhanceFinding);
+
+    // 重要度順でソート
+    const sortedFindings = enhancedFindings.sort((a, b) =>
+      getSeverityOrder(a.severity) - getSeverityOrder(b.severity)
+    );
+
+    // selectedCategoriesがSetでない場合の安全な処理
+    const safeSelectedCategories = selectedCategories instanceof Set
+      ? selectedCategories
+      : new Set(Array.isArray(selectedCategories) ? selectedCategories : []);
+
+    // カテゴリフィルタリングの適用
+    const filteredFindings = safeSelectedCategories.size === 0
+      ? sortedFindings
+      : sortedFindings.filter(finding => safeSelectedCategories.has(finding.category));
+
+    return {
+      isEnhanced,
+      sortedFindings,
+      filteredFindings
+    };
+  }, [result, selectedCategories]);
 
   // コンポーネントマウント時にローカルストレージからフィードバックを読み込み
   useEffect(() => {
@@ -171,7 +188,7 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
   const handleTabKeyDown = (event: React.KeyboardEvent, tabName: string) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      setActiveTab(tabName as 'results' | 'questions' | 'insights');
+      setActiveTab(tabName as 'results' | 'questions' | 'interleave');
     }
   };
 
@@ -181,6 +198,13 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
   const handleFeedback = (findingId: string, feedback: FeedbackType) => {
     setFeedback(findingId, feedback);
     saveFeedbackToStorage(findingId, feedback);
+  };
+
+  /**
+   * カテゴリフィルターの変更ハンドラー
+   */
+  const handleCategoryChange = (categories: FindingCategory[]) => {
+    setSelectedCategories(new Set(categories));
   };
 
   /**
@@ -251,7 +275,7 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
   /**
    * 結果がない場合（初期状態）
    */
-  if (!result || !result.findings) {
+  if (!result || !result.findings || !processedResult) {
     return null;
   }
 
@@ -268,7 +292,7 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
     );
   }
 
-  const isEnhanced = isEnhancedResponse(result);
+  const { isEnhanced, sortedFindings, filteredFindings } = processedResult;
 
   /**
    * 解析結果の表示
@@ -296,9 +320,28 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
             id="results-tab"
           >
             <List className="h-4 w-4" aria-hidden="true" />
-            解析結果
+            リスト
           </Button>
-          {isEnhanced && result.interview_questions.length > 0 && (
+
+          {/* インターリーブ表示タブ */}
+          {originalText && (
+            <Button
+              variant={activeTab === 'interleave' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('interleave')}
+              onKeyDown={(e) => handleTabKeyDown(e, 'interleave')}
+              className="flex items-center gap-2"
+              role="tab"
+              aria-selected={activeTab === 'interleave'}
+              aria-controls="interleave-panel"
+              id="interleave-tab"
+            >
+              <BarChart3 className="h-4 w-4" aria-hidden="true" />
+              インターリーブ表示
+            </Button>
+          )}
+
+          {isEnhanced && 'interview_questions' in result && result.interview_questions.length > 0 && (
             <Button
               variant={activeTab === 'questions' ? 'default' : 'outline'}
               size="sm"
@@ -314,35 +357,22 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
               質問生成
             </Button>
           )}
-          {isEnhanced && (
-            <Button
-              variant={activeTab === 'insights' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setActiveTab('insights')}
-              onKeyDown={(e) => handleTabKeyDown(e, 'insights')}
-              className="flex items-center gap-2"
-              role="tab"
-              aria-selected={activeTab === 'insights'}
-              aria-controls="insights-panel"
-              id="insights-tab"
-            >
-              <BarChart3 className="h-4 w-4" aria-hidden="true" />
-              インサイト
-            </Button>
-          )}
+
+
         </div>
 
         {/* 設定ボタン */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleAnimations}
-          className="flex items-center gap-2 text-muted-foreground"
-          aria-label={enableAnimations ? 'アニメーションを無効にする' : 'アニメーションを有効にする'}
-        >
-          <Settings className="h-4 w-4" aria-hidden="true" />
-          {enableAnimations ? 'アニメーション無効' : 'アニメーション有効'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleAdvancedProgress}
+            className="text-muted-foreground"
+            aria-label="表示設定"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* タブコンテンツ */}
@@ -366,18 +396,18 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" role="group" aria-label="解析統計">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary" aria-label={`${result.summary.total_findings}件の表現が検出されました`}>
-                      {result.summary.total_findings}
+                    <div className="text-2xl font-bold text-primary" aria-label={`${(result as EnhancedAPIResponse).summary.total_findings}件の表現が検出されました`}>
+                      {(result as EnhancedAPIResponse).summary.total_findings}
                     </div>
                     <div className="text-sm text-muted-foreground">検出された表現</div>
                   </div>
                   <div className="text-center">
-                    <SeverityBadge severity={result.summary.risk_level} size="md" />
+                    <SeverityBadge severity={(result as EnhancedAPIResponse).summary.risk_level} size="md" />
                     <div className="text-sm text-muted-foreground mt-1">注意レベル</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium" aria-label={`${result.summary.categories_detected.length}個のカテゴリで検出`}>
-                      {result.summary.categories_detected.length}カテゴリ
+                    <div className="text-sm font-medium" aria-label={`${(result as EnhancedAPIResponse).summary.categories_detected.length}個のカテゴリで検出`}>
+                      {(result as EnhancedAPIResponse).summary.categories_detected.length}カテゴリ
                     </div>
                     <div className="text-sm text-muted-foreground">検出範囲</div>
                   </div>
@@ -385,14 +415,14 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
 
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">💡 総合的な推奨事項</h4>
-                  <p className="text-sm text-muted-foreground">{result.summary.overall_recommendation}</p>
+                  <p className="text-sm text-muted-foreground">{(result as EnhancedAPIResponse).summary.overall_recommendation}</p>
                 </div>
 
-                {result.summary.categories_detected.length > 0 && (
+                {(result as EnhancedAPIResponse).summary.categories_detected.length > 0 && (
                   <div className="border-t pt-4 mt-4">
                     <h4 className="font-medium mb-2">🏷️ 検出されたカテゴリ</h4>
                     <div className="flex flex-wrap gap-2" role="list" aria-label="検出されたカテゴリ一覧">
-                      {result.summary.categories_detected.map(category => (
+                      {(result as EnhancedAPIResponse).summary.categories_detected.map((category: FindingCategory) => (
                         <Badge key={category} variant="secondary" className="text-xs" role="listitem">
                           {CATEGORY_LABELS[category] || category}
                         </Badge>
@@ -408,8 +438,8 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
           {sortedFindings.length > 1 && (
             <CategoryFilter
               findings={sortedFindings}
-              selectedCategories={selectedCategories}
-              onCategoryChange={setSelectedCategories}
+              selectedCategories={Array.from(selectedCategories)}
+              onCategoryChange={handleCategoryChange}
               compact={true}
             />
           )}
@@ -443,8 +473,26 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
         </div>
       )}
 
+      {/* インターリーブ表示タブ */}
+      {activeTab === 'interleave' && originalText && (
+        <div
+          role="tabpanel"
+          id="interleave-panel"
+          aria-labelledby="interleave-tab"
+          tabIndex={0}
+        >
+          <InterleaveDisplay
+            originalText={originalText}
+            analysisResult={result}
+            onFeedback={handleFeedback}
+            feedbackState={feedbackHistory}
+            animated={enableAnimations}
+          />
+        </div>
+      )}
+
       {/* 質問生成タブ */}
-      {activeTab === 'questions' && isEnhanced && result.interview_questions.length > 0 && (
+      {activeTab === 'questions' && isEnhanced && 'interview_questions' in result && result.interview_questions.length > 0 && (
         <div
           role="tabpanel"
           id="questions-panel"
@@ -458,20 +506,7 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
         </div>
       )}
 
-      {/* インサイトタブ */}
-      {activeTab === 'insights' && isEnhanced && (
-        <div
-          role="tabpanel"
-          id="insights-panel"
-          aria-labelledby="insights-tab"
-          tabIndex={0}
-        >
-          <InsightsSummary
-            analysisResult={result}
-            findings={sortedFindings}
-          />
-        </div>
-      )}
+
     </div>
   );
 }

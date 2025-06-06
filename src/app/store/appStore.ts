@@ -20,11 +20,14 @@ import {
 interface AnalysisState {
   /** 現在の解析結果 */
   currentResult: EnhancedAPIResponse | LLMResponse | null;
+  /** 原文テキスト */
+  originalText: string | null;
   /** 解析履歴 */
   analysisHistory: Array<{
     id: string;
     timestamp: string;
     result: EnhancedAPIResponse | LLMResponse;
+    originalText: string;
     jobTitle?: string;
   }>;
   /** 解析進捗 */
@@ -52,7 +55,7 @@ interface FilterState {
  */
 interface UIState {
   /** アクティブなタブ */
-  activeTab: 'results' | 'questions' | 'insights';
+  activeTab: 'results' | 'questions' | 'interleave';
   /** アニメーション有効/無効 */
   enableAnimations: boolean;
   /** 詳細進捗表示 */
@@ -92,10 +95,11 @@ interface QuestionState {
 interface AppState extends AnalysisState, FilterState, UIState, FeedbackState, QuestionState {
   // 解析関連のアクション
   setAnalysisResult: (result: EnhancedAPIResponse | LLMResponse | null) => void;
+  setOriginalText: (text: string | null) => void;
   setAnalysisProgress: (progress: AnalysisProgress | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  addToHistory: (result: EnhancedAPIResponse | LLMResponse, jobTitle?: string) => void;
+  addToHistory: (result: EnhancedAPIResponse | LLMResponse, originalText: string, jobTitle?: string) => void;
   clearHistory: () => void;
   removeFromHistory: (id: string) => void;
 
@@ -107,7 +111,7 @@ interface AppState extends AnalysisState, FilterState, UIState, FeedbackState, Q
   clearFilters: () => void;
 
   // UI関連のアクション
-  setActiveTab: (tab: 'results' | 'questions' | 'insights') => void;
+  setActiveTab: (tab: 'results' | 'questions' | 'interleave') => void;
   toggleAnimations: () => void;
   toggleAdvancedProgress: () => void;
   toggleDarkMode: () => void;
@@ -136,6 +140,7 @@ interface AppState extends AnalysisState, FilterState, UIState, FeedbackState, Q
 const initialState = {
   // 解析状態
   currentResult: null,
+  originalText: null,
   analysisHistory: [],
   analysisProgress: null,
   isLoading: false,
@@ -147,7 +152,7 @@ const initialState = {
   searchQuery: '',
 
   // UI状態
-  activeTab: 'results' as const,
+  activeTab: 'interleave' as const,
   enableAnimations: true,
   showAdvancedProgress: false,
   isDarkMode: false,
@@ -162,6 +167,19 @@ const initialState = {
 };
 
 /**
+ * selectedCategoriesをSetに変換するヘルパー関数
+ */
+function ensureSetCategories(categories: Set<FindingCategory> | FindingCategory[] | unknown): Set<FindingCategory> {
+  if (categories instanceof Set) {
+    return categories;
+  }
+  if (Array.isArray(categories)) {
+    return new Set(categories);
+  }
+  return new Set<FindingCategory>();
+}
+
+/**
  * アプリケーションストア
  */
 export const useAppStore = create<AppState>()(
@@ -172,16 +190,18 @@ export const useAppStore = create<AppState>()(
       // 解析関連のアクション
       setAnalysisResult: (result) => set({ currentResult: result }),
 
+      setOriginalText: (text) => set({ originalText: text }),
+
       setAnalysisProgress: (progress) => set({ analysisProgress: progress }),
 
       setLoading: (loading) => set({ isLoading: loading }),
 
       setError: (error) => set({ error }),
 
-      addToHistory: (result, jobTitle) => {
+      addToHistory: (result, originalText, jobTitle) => {
         const id = `analysis-${Date.now()}`;
         const timestamp = new Date().toISOString();
-        const historyItem = { id, timestamp, result, jobTitle };
+        const historyItem = { id, timestamp, result, originalText, jobTitle };
 
         set((state) => ({
           analysisHistory: [historyItem, ...state.analysisHistory.slice(0, 9)] // 最大10件保持
@@ -195,10 +215,11 @@ export const useAppStore = create<AppState>()(
       })),
 
       // フィルター関連のアクション
-      setSelectedCategories: (categories) => set({ selectedCategories: categories }),
+      setSelectedCategories: (categories) => set({ selectedCategories: ensureSetCategories(categories) }),
 
       toggleCategory: (category) => set((state) => {
-        const newCategories = new Set(state.selectedCategories);
+        const currentCategories = ensureSetCategories(state.selectedCategories);
+        const newCategories = new Set(currentCategories);
         if (newCategories.has(category)) {
           newCategories.delete(category);
         } else {
@@ -296,7 +317,7 @@ export const useAppStore = create<AppState>()(
           set((state) => ({
             ...state,
             ...importedState,
-            selectedCategories: new Set(importedState.selectedCategories || [])
+            selectedCategories: ensureSetCategories(importedState.selectedCategories || [])
           }));
         } catch (error) {
           console.error('Failed to import state:', error);
@@ -308,7 +329,7 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => {
         // 永続化するステートを選択
-        const persistedState = {
+        return {
           enableAnimations: state.enableAnimations,
           showAdvancedProgress: state.showAdvancedProgress,
           isDarkMode: state.isDarkMode,
@@ -317,23 +338,18 @@ export const useAppStore = create<AppState>()(
           // Set型を配列に変換して保存
           selectedCategories: Array.from(state.selectedCategories)
         };
-        return persistedState;
       },
-      // zustand v5ではカスタムのserialize/deserializeを使用せず、
-      // hydrateコールバックでSet型を復元
+      // 復元時の処理
       onRehydrateStorage: () => {
-        // ストレージからのデータがロードされた後に実行される
-        return (restoredState, error) => {
+        return (state, error) => {
           if (error) {
             console.error('Error rehydrating state:', error);
             return;
           }
-          
-          if (restoredState && Array.isArray(restoredState.selectedCategories)) {
-            // Set型を復元
-            useAppStore.setState({
-              selectedCategories: new Set(restoredState.selectedCategories)
-            });
+
+          if (state) {
+            // selectedCategoriesを適切にSetに変換
+            state.selectedCategories = ensureSetCategories(state.selectedCategories);
           }
         };
       }
@@ -372,8 +388,8 @@ export const useAnalysisSelectors = () => {
 
     // フィルタリングされた結果を取得
     getFilteredFindings: (): EnhancedFinding[] => {
-      const store = useAppStore.getState();
-      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
+      const storeState = useAppStore.getState();
+      const findings = storeState.currentResult?.findings ? storeState.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
         // 既にEnhancedFindingの場合はそのまま返す
         if ('severity' in finding && 'category' in finding) {
           return finding as EnhancedFinding;
@@ -390,20 +406,22 @@ export const useAnalysisSelectors = () => {
         };
       }) : [];
 
+      const selectedCategories = ensureSetCategories(storeState.selectedCategories);
+
       return findings.filter(finding => {
         // カテゴリフィルター
-        if (store.selectedCategories.size > 0 && !store.selectedCategories.has(finding.category)) {
+        if (selectedCategories.size > 0 && !selectedCategories.has(finding.category)) {
           return false;
         }
 
         // 重要度フィルター
-        if (store.severityFilter !== 'all' && finding.severity !== store.severityFilter) {
+        if (storeState.severityFilter !== 'all' && finding.severity !== storeState.severityFilter) {
           return false;
         }
 
         // 検索クエリフィルター
-        if (store.searchQuery) {
-          const query = store.searchQuery.toLowerCase();
+        if (storeState.searchQuery) {
+          const query = storeState.searchQuery.toLowerCase();
           return (
             finding.original_phrase.toLowerCase().includes(query) ||
             finding.potential_realities.some(reality => reality.toLowerCase().includes(query)) ||
@@ -419,8 +437,8 @@ export const useAnalysisSelectors = () => {
 
     // 統計情報を取得
     getStatistics: () => {
-      const store = useAppStore.getState();
-      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
+      const storeState = useAppStore.getState();
+      const findings = storeState.currentResult?.findings ? storeState.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
         // 既にEnhancedFindingの場合はそのまま返す
         if ('severity' in finding && 'category' in finding) {
           return finding as EnhancedFinding;
