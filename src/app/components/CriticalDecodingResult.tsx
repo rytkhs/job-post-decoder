@@ -22,15 +22,24 @@ import { CompactStepVisualizer } from './analysis/StepVisualizer';
 import { useAppStore } from '../store/appStore';
 import {
   CriticalAnalysisResponse,
+  EnhancedAPIResponse,
+  LLMResponse,
   AnalysisProgress as AnalysisProgressType,
   FeedbackType
 } from '../types/api';
 
 /**
+ * CriticalAnalysisResponseかどうかを判定する型ガード
+ */
+function isCriticalAnalysisResponse(result: CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse | null): result is CriticalAnalysisResponse {
+  return result !== null && 'key_findings' in result && 'overall_diagnosis' in result;
+}
+
+/**
  * CriticalDecodingResult コンポーネントのプロパティ
  */
 interface CriticalDecodingResultProps {
-  result: CriticalAnalysisResponse | null;
+  result: CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse | null;
   isLoading: boolean;
   error: string | null;
   /** 解析進捗情報（オプション） */
@@ -133,6 +142,29 @@ export function CriticalDecodingResult({
    */
   if (!result) {
     return null;
+  }
+
+  /**
+   * CriticalAnalysisResponse形式でない場合
+   */
+  if (!isCriticalAnalysisResponse(result)) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto mt-8" role="status">
+        <CardContent className="pt-6 text-center space-y-4">
+          <div className="flex justify-center">
+            <AlertCircle className="h-12 w-12 text-amber-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-amber-600 dark:text-amber-400 mb-2">
+              非対応の結果形式です
+            </h3>
+            <p className="text-muted-foreground">
+              この結果は辛口診断システムに対応していません。
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   /**

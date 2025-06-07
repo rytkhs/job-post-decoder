@@ -12,7 +12,7 @@ import { JobPostingForm } from './components/JobPostingForm';
 import { CriticalDecodingResult } from './components/CriticalDecodingResult';
 import { Footer } from './components/Footer';
 import { useAppStore } from './store/appStore';
-import { APIErrorResponse, CriticalAnalysisResponse } from './types/api';
+import { APIErrorResponse } from './types/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -440,7 +440,7 @@ export default function Home() {
               )}
 
               <CriticalDecodingResult
-                result={currentResult as CriticalAnalysisResponse | null}
+                result={currentResult}
                 isLoading={isLoading}
                 error={error}
                 analysisProgress={analysisProgress ?? undefined}
