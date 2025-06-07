@@ -172,14 +172,14 @@ export function SettingsPanel({ isOpen, onClose, className = '' }: SettingsPanel
   // Zustandストアから状態とアクションを取得
   const {
     enableAnimations,
-    showAdvancedProgress,
+
     isDarkMode,
     isCompactView,
     analysisHistory,
     feedbackHistory,
     customQuestions,
     toggleAnimations,
-    toggleAdvancedProgress,
+
     toggleDarkMode,
     toggleCompactView,
     clearHistory,
@@ -421,19 +421,7 @@ export function SettingsPanel({ isOpen, onClose, className = '' }: SettingsPanel
                 </div>
               </SettingItem>
 
-              <SettingItem
-                icon={<Info className="h-4 w-4" />}
-                title="詳細進捗表示"
-                description="解析時に詳細な進捗情報を表示します"
-              >
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={showAdvancedProgress}
-                    onCheckedChange={toggleAdvancedProgress}
-                  />
-                  <Label>詳細進捗を表示</Label>
-                </div>
-              </SettingItem>
+
             </TabsContent>
 
             {/* データ管理 */}
@@ -547,7 +535,7 @@ export function SettingsPanel({ isOpen, onClose, className = '' }: SettingsPanel
               <SettingItem
                 icon={<RotateCcw className="h-4 w-4" />}
                 title="全設定リセット"
-                description="すべての設定と履歴を初期状態に戻します"
+                description="すべての設定とを初期状態に戻します"
                 badge="危険"
               >
                 <Button
@@ -566,7 +554,7 @@ export function SettingsPanel({ isOpen, onClose, className = '' }: SettingsPanel
                 description="バージョンと技術情報"
               >
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <p>求人票デコーダー v1.0.0</p>
+                  <p>ブラック求人チェッカー v1.0.0</p>
                   <p>Next.js App Router + TypeScript</p>
                   <p>Tailwind CSS + Shadcn/ui</p>
                   <p>Zustand + Framer Motion</p>

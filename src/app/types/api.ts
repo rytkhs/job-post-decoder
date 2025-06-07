@@ -1,7 +1,58 @@
 /**
  * API関連の型定義
  * 求人票デコーダーのAPIレスポンスとリクエストの型を定義
+ * 辛口キャリアアドバイザー診断システム用
  */
+
+/**
+ * 危険度レベル
+ */
+export type DangerLevel = '🔴' | '🟡' | '🟢';
+
+/**
+ * フィードバックタイプ
+ */
+export type FeedbackType = 'helpful' | 'not-helpful';
+
+/**
+ * 辛口診断の個別項目
+ */
+export interface CriticalFinding {
+  /** 問題のあるフレーズ */
+  phrase: string;
+  /** 危険度レベル */
+  danger_level: DangerLevel;
+  /** 辛口一言診断 */
+  one_line_diagnosis: string;
+  /** 企業がこの表現を使う裏の事情 */
+  hidden_reality: string;
+  /** 面接での角が立たない確認方法 */
+  how_to_check: string;
+  /** よくある事例・パターン */
+  real_story: string;
+}
+
+/**
+ * 辛口診断APIレスポンス
+ */
+export interface CriticalAnalysisResponse {
+  /** 全体の診断結果 */
+  overall_diagnosis: string;
+  /** 個別の診断項目 */
+  key_findings: CriticalFinding[];
+  /** 面接戦略のアドバイス */
+  interview_strategy: string;
+  /** 総合的なレッドフラッグサマリー */
+  red_flags_summary: string;
+  /** 受けるべきか見送るべきかの判断指針 */
+  recommendation: 'apply' | 'caution' | 'avoid';
+  /** 危険度の統計 */
+  danger_stats: {
+    high_risk_count: number;
+    medium_risk_count: number;
+    low_risk_count: number;
+  };
+}
 
 /**
  * 求人票の表現カテゴリ
@@ -17,11 +68,6 @@ export type SeverityLevel = 'high' | 'medium' | 'low';
  * リスクレベル
  */
 export type RiskLevel = 'high' | 'medium' | 'low';
-
-/**
- * フィードバックタイプ
- */
-export type FeedbackType = 'helpful' | 'not-helpful';
 
 /**
  * 基本的な解析結果項目（既存との互換性維持）

@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Moon, Sun, Menu, X, Zap } from 'lucide-react';
+import { Shield, AlertTriangle, Moon, Sun, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 
 /**
@@ -95,25 +95,25 @@ export function Header() {
           <div className="flex items-center justify-between">
             {/* ブランドロゴとタイトル */}
             <div className="flex items-center space-x-3 group">
-              {/* アプリアイコン - アニメーション付きスパークルアイコン */}
+              {/* アプリアイコン - 警告・チェックのイメージ */}
               <div className="relative">
-                <Sparkles
-                  className="h-8 w-8 text-primary transition-all duration-300 group-hover:text-gradient-start group-hover:rotate-12"
+                <Shield
+                  className="h-8 w-8 text-red-500 transition-all duration-300 group-hover:text-red-600 group-hover:rotate-12"
                   aria-hidden="true"
                 />
-                <Zap
-                  className="absolute -top-1 -right-1 h-4 w-4 text-warning opacity-0 group-hover:opacity-100 transition-all duration-300 animate-pulse"
+                <AlertTriangle
+                  className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 opacity-0 group-hover:opacity-100 transition-all duration-300 animate-pulse"
                   aria-hidden="true"
                 />
               </div>
 
               {/* アプリケーション名とキャッチフレーズ */}
               <div className="flex flex-col">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gradient leading-tight">
-                  求人票デコーダー
+                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent leading-tight">
+                  ブラック求人チェッカー
                 </h1>
                 <p className="text-xs text-muted-foreground font-medium tracking-wide">
-                  AI-Powered Job Analysis
+                  Protect Yourself from Bad Jobs
                 </p>
               </div>
             </div>
@@ -123,8 +123,8 @@ export function Header() {
               {/* アプリの説明文 */}
               <div className="text-center max-w-md">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  求人票の裏にある本音を<br className="hidden lg:block"/>
-                  <span className="text-primary font-semibold">AI</span>が解析します
+                  ブラック企業の甘い言葉を<br className="hidden lg:block"/>
+                  <span className="text-red-500 font-semibold">見破る</span>辛口診断
                 </p>
               </div>
 
@@ -233,12 +233,12 @@ export function Header() {
           <div className="p-6 pt-20">
             <div className="text-center space-y-4">
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-gradient">
-                  求人票デコーダー
+                <h2 className="text-xl font-semibold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                  ブラック求人チェッカー
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  求人票の裏にある本音を<br/>
-                  <span className="text-primary font-semibold">AI</span>が解析します
+                  ブラック企業の甘い言葉を<br/>
+                  <span className="text-red-500 font-semibold">見破る</span>辛口診断
                 </p>
               </div>
 

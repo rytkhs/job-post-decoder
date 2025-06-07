@@ -12,7 +12,7 @@ import {
   Loader2,      // ローディングアイコン
   TrendingUp,   // 統計アイコン
   MessageSquare, // 質問アイコン
-  Settings,     // 設定アイコン
+
   BarChart3,    // ダッシュボードアイコン
   List,         // リストアイコン
 } from 'lucide-react';
@@ -24,7 +24,7 @@ import {
 } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { AnalysisProgress } from './analysis/AnalysisProgress';
+
 import { CompactStepVisualizer } from './analysis/StepVisualizer';
 import { SeverityBadge, getSeverityOrder } from './results/SeverityBadge';
 import { AnimatedResultList } from './results/AnimatedResultCard';
@@ -101,14 +101,14 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
     // 状態の取得
     activeTab,
     enableAnimations,
-    showAdvancedProgress,
+
     selectedCategories,
     feedbackHistory,
     originalText,
 
     // アクションの取得
     setActiveTab,
-    toggleAdvancedProgress,
+
     setSelectedCategories,
     setFeedback
   } = useAppStore();
@@ -214,35 +214,15 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
     // 解析進捗情報がある場合は詳細な進捗を表示
     if (analysisProgress) {
       return (
-        <div className="w-full max-w-3xl mx-auto mt-8 space-y-4" role="status" aria-live="polite">
-          {/* 進捗表示切り替えボタン */}
-          <div className="flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleAdvancedProgress}
-              className="text-muted-foreground"
-              aria-label={showAdvancedProgress ? 'シンプル表示に切り替え' : '詳細表示に切り替え'}
-            >
-              {showAdvancedProgress ? 'シンプル表示' : '詳細表示'}
-            </Button>
-          </div>
-
-          {/* 進捗表示 */}
-          {showAdvancedProgress ? (
-            <AnalysisProgress progress={analysisProgress} />
-          ) : (
-            <Card className="w-full max-w-3xl mx-auto">
-              <CardContent className="flex flex-col items-center justify-center py-10">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" aria-hidden="true" />
-                <p className="text-center text-muted-foreground mb-4" aria-live="polite">
-                  {analysisProgress.message}
-                </p>
-                <CompactStepVisualizer currentStep={analysisProgress.currentStep} />
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        <Card className="w-full max-w-3xl mx-auto mt-8">
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" aria-hidden="true" />
+            <p className="text-center text-muted-foreground mb-4" aria-live="polite">
+              {analysisProgress.message}
+            </p>
+            <CompactStepVisualizer currentStep={analysisProgress.currentStep} />
+          </CardContent>
+        </Card>
       );
     }
 
@@ -361,18 +341,7 @@ export function DecodingResult({ result, isLoading, error, analysisProgress }: D
 
         </div>
 
-        {/* 設定ボタン */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleAdvancedProgress}
-            className="text-muted-foreground"
-            aria-label="表示設定"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
+
       </div>
 
       {/* タブコンテンツ */}

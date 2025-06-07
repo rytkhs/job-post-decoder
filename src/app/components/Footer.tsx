@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { Heart, Info, Github, Twitter, Mail, Shield, Sparkles, Brain, Target } from 'lucide-react';
+import { Info, Shield, Brain, Target, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 /**
@@ -54,46 +54,41 @@ export function Footer() {
           {/* ブランドセクション */}
           <motion.div variants={itemVariants} className="space-y-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
-              <h3 className="text-lg font-bold text-gradient">求人票デコーダー</h3>
+              <Shield className="h-6 w-6 text-red-500" />
+              <h3 className="text-lg font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">ブラック求人チェッカー</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              AIが求人票の裏に隠された意味を解析し、より良い転職活動をサポートします。
-              透明性のある採用プロセスの実現を目指しています。
+              求職者をブラック企業から守るため、甘い言葉に隠された危険を見抜きます。
+              転職失敗を防ぎ、より良いキャリア選択をサポートします。
             </p>
-            <div className="flex items-center gap-1 text-sm">
-              <span className="text-muted-foreground">作成</span>
-              <Heart className="h-4 w-4 text-red-500 fill-red-500 animate-pulse" />
-              <span className="text-muted-foreground">で求職者を応援</span>
-            </div>
           </motion.div>
 
           {/* 機能・特徴セクション */}
           <motion.div variants={itemVariants} className="space-y-4">
             <h4 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <Brain className="h-4 w-4 text-primary" />
-              主な機能
+              分析について
             </h4>
-            <div className="space-y-3">
+                        <div className="space-y-3">
               <div className="flex items-start gap-2">
                 <Target className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground/80">AI解析</p>
-                  <p className="text-xs text-muted-foreground">曖昧な表現の真意を推測</p>
+                  <p className="text-sm font-medium text-foreground/80">AI分析手法</p>
+                  <p className="text-xs text-muted-foreground">LLMによる自然言語処理で表現を解析</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <Shield className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground/80">プライバシー保護</p>
-                  <p className="text-xs text-muted-foreground">データは保存されません</p>
+                  <p className="text-sm font-medium text-foreground/80">判断基準</p>
+                  <p className="text-xs text-muted-foreground">転職市場の一般的なパターンに基づく推測</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <Eye className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground/80">瞬時の結果</p>
-                  <p className="text-xs text-muted-foreground">リアルタイムで解析</p>
+                  <p className="text-sm font-medium text-foreground/80">重要な注意</p>
+                  <p className="text-xs text-muted-foreground">結果は推測です。最終判断は面接で確認を</p>
                 </div>
               </div>
             </div>
@@ -122,55 +117,18 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             {/* 著作権情報 */}
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>© {currentYear} 求人票デコーダー</span>
+              <span>© {currentYear} ブラック求人チェッカー</span>
               <span className="hidden sm:inline">•</span>
-              <span className="text-xs">すべての権利を保有</span>
+              <span className="text-xs">All Rights Reserved</span>
+              {/* <span className="hidden sm:inline">•</span>
+              <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded">
+                🆓 現在無料提供中
+              </span> */}
             </div>
 
-            {/* ソーシャルリンク（デモ用） */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <motion.a
-                  href="#"
-                  className="p-2 rounded-full bg-muted/50 hover:bg-primary/20 transition-colors duration-300"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="GitHub"
-                >
-                  <Github className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                </motion.a>
-                <motion.a
-                  href="#"
-                  className="p-2 rounded-full bg-muted/50 hover:bg-primary/20 transition-colors duration-300"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="Twitter"
-                >
-                  <Twitter className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                </motion.a>
-                <motion.a
-                  href="#"
-                  className="p-2 rounded-full bg-muted/50 hover:bg-primary/20 transition-colors duration-300"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="Contact"
-                >
-                  <Mail className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                </motion.a>
-              </div>
-            </div>
           </div>
         </motion.div>
 
-        {/* 技術情報 */}
-        <motion.div
-          variants={itemVariants}
-          className="text-center pt-4 border-t border-border/30 mt-6"
-        >
-          <p className="text-xs text-muted-foreground/70">
-            Powered by Next.js • Tailwind CSS • OpenAI • Made with passion for job seekers
-          </p>
-        </motion.div>
       </motion.div>
     </footer>
   );

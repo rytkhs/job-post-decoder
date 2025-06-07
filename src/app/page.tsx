@@ -9,20 +9,19 @@
  */
 
 import { JobPostingForm } from './components/JobPostingForm';
-import { DecodingResult } from './components/DecodingResult';
+import { CriticalDecodingResult } from './components/CriticalDecodingResult';
 import { Footer } from './components/Footer';
 import { useAppStore } from './store/appStore';
-import { APIErrorResponse, EnhancedAPIResponse, LLMResponse } from './types/api';
+import { APIErrorResponse, CriticalAnalysisResponse } from './types/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles,
   Shield,
+  AlertTriangle,
   Users,
   TrendingUp,
   History,
   ChevronDown,
-  ArrowRight,
-  Zap
+  ArrowRight
 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { useState, useRef } from 'react';
@@ -46,8 +45,9 @@ export default function Home() {
     setOriginalText,
     setLoading,
     setError,
-    setAnalysisProgress,
-    addToHistory
+    setAnalysisProgress
+    // TODO: 履歴機能は後で対応
+    // addToHistory
   } = useAppStore();
 
   // ローカルステート
@@ -60,11 +60,13 @@ export default function Home() {
    */
   const simulateProgress = () => {
     const steps = [
-      { step: 'input' as const, progress: 10, message: '入力内容を確認しています...', estimatedTime: 8 },
-      { step: 'analyzing' as const, progress: 30, message: 'AI解析を実行しています...', estimatedTime: 6 },
-      { step: 'analyzing' as const, progress: 60, message: '詳細な分析を行っています...', estimatedTime: 4 },
-      { step: 'results' as const, progress: 85, message: '結果を整理しています...', estimatedTime: 2 },
-      { step: 'insights' as const, progress: 100, message: '解析が完了しました', estimatedTime: 0 }
+      { step: 'input' as const, progress: 5, message: '求人票を精査しています...', estimatedTime: 15 },
+      { step: 'analyzing' as const, progress: 15, message: '甘い言葉を特定中...', estimatedTime: 12 },
+      { step: 'analyzing' as const, progress: 35, message: 'ブラック要素を分析中...', estimatedTime: 9 },
+      { step: 'analyzing' as const, progress: 55, message: '企業の本音を推測中...', estimatedTime: 6 },
+      { step: 'analyzing' as const, progress: 75, message: '危険度を判定中...', estimatedTime: 4 },
+      { step: 'results' as const, progress: 90, message: '辛口診断を作成中...', estimatedTime: 2 },
+      { step: 'insights' as const, progress: 100, message: '診断完了！', estimatedTime: 0 }
     ];
 
     let currentStepIndex = 0;
@@ -80,11 +82,13 @@ export default function Home() {
         });
         currentStepIndex++;
 
-        // 次のステップまでの待機時間を設定
-        const delay = currentStepIndex === 1 ? 1000 :
-                     currentStepIndex === 2 ? 2000 :
+        // より長い待機時間（10-15秒の処理に対応）
+        const delay = currentStepIndex === 1 ? 2000 :
+                     currentStepIndex === 2 ? 2500 :
                      currentStepIndex === 3 ? 3000 :
-                     currentStepIndex === 4 ? 1500 : 500;
+                     currentStepIndex === 4 ? 5000 :
+                     currentStepIndex === 5 ? 3000 :
+                     currentStepIndex === 6 ? 1500 : 500;
 
         setTimeout(updateProgress, delay);
       }
@@ -133,13 +137,10 @@ export default function Home() {
       // 成功時は結果を状態に設定
       setAnalysisResult(data);
 
-      // インターリーブ表示をデフォルトに設定
-      const { setActiveTab } = useAppStore.getState();
-      setActiveTab('interleave');
-
       // 解析履歴に追加（求人票のタイトルを抽出して保存）
-      const jobTitle = extractJobTitle(text);
-      addToHistory(data, text, jobTitle);
+      // TODO: 辛口診断システム対応後に復活
+      // const jobTitle = extractJobTitle(text);
+      // addToHistory(data, text, jobTitle);
 
     } catch (err) {
       // エラー発生時の処理
@@ -177,29 +178,25 @@ export default function Home() {
   };
 
       /**
-   * 履歴項目をロード
+   * 履歴項目をロード（一時的にコメントアウト）
    */
-  const loadHistoryItem = (item: {
-    id: string;
-    timestamp: string;
-    result: EnhancedAPIResponse | LLMResponse;
-    originalText: string;
-    jobTitle?: string;
-  }) => {
-    setAnalysisResult(item.result);
-    setOriginalText(item.originalText);
-    setShowHistory(false);
+  // const loadHistoryItem = (item: {
+  //   id: string;
+  //   timestamp: string;
+  //   result: CriticalAnalysisResponse;
+  //   originalText: string;
+  //   jobTitle?: string;
+  // }) => {
+  //   setAnalysisResult(item.result);
+  //   setOriginalText(item.originalText);
+  //   setShowHistory(false);
 
-    // インターリーブ表示をデフォルトに設定
-    const { setActiveTab } = useAppStore.getState();
-    setActiveTab('interleave');
-
-    // 結果表示までスクロール
-    setTimeout(() => {
-      const resultSection = document.querySelector('[data-testid="result-section"]');
-      resultSection?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
+  //   // 結果表示までスクロール
+  //   setTimeout(() => {
+  //     const resultSection = document.querySelector('[data-testid="result-section"]');
+  //     resultSection?.scrollIntoView({ behavior: 'smooth' });
+  //   }, 100);
+  // };
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,20 +211,20 @@ export default function Home() {
               className="flex items-center space-x-3"
             >
               <div className="relative">
-                <Sparkles className="h-8 w-8 text-primary" />
-                <Zap className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 animate-pulse" />
+                <Shield className="h-8 w-8 text-red-500" />
+                <AlertTriangle className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 animate-pulse" />
               </div>
               <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-foreground">
-                  求人票デコーダー
+                <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                  ブラック求人チェッカー
                 </h1>
                 <p className="text-xs text-muted-foreground hidden sm:block">
-                  AI-Powered Job Analysis
+                  Protect Yourself from Bad Jobs
                 </p>
               </div>
             </motion.div>
 
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -247,12 +244,12 @@ export default function Home() {
                   </span>
                 )}
               </Button>
-            </motion.div>
+            </motion.div> */}
           </div>
         </div>
 
         {/* 履歴パネル */}
-        <AnimatePresence>
+        {/* <AnimatePresence>
           {showHistory && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -273,7 +270,9 @@ export default function Home() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        onClick={() => loadHistoryItem(item)}
+                        onClick={() => {
+                          // TODO: 履歴機能復活時に対応
+                        }}
                         className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors"
                       >
                         <div className="flex items-center justify-between">
@@ -294,7 +293,7 @@ export default function Home() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
       </header>
 
       {/* ヒーローセクション */}
@@ -309,17 +308,17 @@ export default function Home() {
             >
               <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
                 求人票の
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-                  隠された意味
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">
+                  甘い言葉
                 </span>
-                を<br/>
-                AIが解析します
+                に<br/>
+                騙されるな！
               </h2>
 
               <p className="text-lg lg:text-xl text-muted-foreground mb-8 leading-relaxed">
-                「アットホームな職場」「やる気のある方歓迎」など、<br className="hidden sm:block"/>
-                求人票の曖昧な表現の裏にある本音を明らかにし、<br className="hidden sm:block"/>
-                より良い転職活動をサポートします。
+                「アットホームな職場」「やりがいのある仕事」など、<br className="hidden sm:block"/>
+                企業の巧妙な表現の裏にある本音を辛口診断！<br className="hidden sm:block"/>
+                転職失敗を防ぐ強い味方です。
               </p>
 
               {/* 特徴カード */}
@@ -330,10 +329,10 @@ export default function Home() {
                   transition={{ delay: 0.2, duration: 0.5 }}
                   className="p-6 rounded-xl border bg-card/50 backdrop-blur-sm"
                 >
-                  <Shield className="h-8 w-8 text-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">リスク分析</h3>
+                  <Shield className="h-8 w-8 text-red-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">🔴 辛口診断</h3>
                   <p className="text-sm text-muted-foreground">
-                    注意すべき表現を特定し、潜在的なリスクを評価
+                    企業の甘い言葉を見破り、隠された本音を暴露
                   </p>
                 </motion.div>
 
@@ -343,10 +342,10 @@ export default function Home() {
                   transition={{ delay: 0.3, duration: 0.5 }}
                   className="p-6 rounded-xl border bg-card/50 backdrop-blur-sm"
                 >
-                  <Users className="h-8 w-8 text-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">質問提案</h3>
+                  <Users className="h-8 w-8 text-amber-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">🟡 面接戦略</h3>
                   <p className="text-sm text-muted-foreground">
-                    面接で確認すべき具体的な質問を自動生成
+                    やんわりと本音を聞き出す実用的なテクニック
                   </p>
                 </motion.div>
 
@@ -356,10 +355,10 @@ export default function Home() {
                   transition={{ delay: 0.4, duration: 0.5 }}
                   className="p-6 rounded-xl border bg-card/50 backdrop-blur-sm"
                 >
-                  <TrendingUp className="h-8 w-8 text-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">インサイト</h3>
+                  <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">🟢 事例分析</h3>
                   <p className="text-sm text-muted-foreground">
-                    業界知識に基づいた深い洞察を提供
+                    よくあるパターンに基づいた具体的なアドバイス
                   </p>
                 </motion.div>
               </div>
@@ -368,16 +367,27 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
+                className="space-y-6"
               >
                 <Button
                   onClick={scrollToForm}
                   size="lg"
-                  className="text-lg px-8 py-6 rounded-xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="text-lg px-8 py-6 rounded-xl bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  無料で始める
+                  <Shield className="h-5 w-5 mr-2" />
+                  辛口診断を受ける
                   <ChevronDown className="h-5 w-5 ml-2 animate-bounce" />
                 </Button>
+
+                {/* 無料提供告知 */}
+                {/* <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 max-w-md mx-auto">
+                  <div className="flex items-center justify-center gap-2 text-sm mb-2">
+                    <span className="text-green-600 dark:text-green-400 font-semibold">🆓 現在無料でご利用いただけます</span>
+                  </div>
+                  <p className="text-xs text-green-700 dark:text-green-300 text-center">
+                    求職者の安全な転職活動をサポートするため、基本機能は無料で提供中
+                  </p>
+                </div> */}
               </motion.div>
             </motion.div>
           </div>
@@ -430,8 +440,8 @@ export default function Home() {
                 </div>
               )}
 
-              <DecodingResult
-                result={currentResult}
+              <CriticalDecodingResult
+                result={currentResult as CriticalAnalysisResponse | null}
                 isLoading={isLoading}
                 error={error}
                 analysisProgress={analysisProgress ?? undefined}

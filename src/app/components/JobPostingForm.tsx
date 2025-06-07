@@ -83,7 +83,7 @@ export function JobPostingForm({ onSubmit, isLoading }: JobPostingFormProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_CHARACTERS = 10000;
+  const MAX_CHARACTERS = 5000;
   const MIN_CHARACTERS = 50;
 
   /**
@@ -222,7 +222,7 @@ export function JobPostingForm({ onSubmit, isLoading }: JobPostingFormProps) {
             <Sparkles className="h-6 w-6 text-primary animate-pulse" />
           </motion.div>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            求人票のテキストを入力すると、AIが隠れた意味や注意点を解析します
+            求人票のテキストを入力すると、辛口キャリアアドバイザーが企業の甘い言葉を見破ります
           </p>
         </div>
 
@@ -306,7 +306,7 @@ export function JobPostingForm({ onSubmit, isLoading }: JobPostingFormProps) {
                   id="job-posting-text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="ここに求人票のテキストを貼り付けてください（例：給与、勤務時間、待遇・福利厚生など）"
+                  placeholder="ここに求人票のテキストを貼り付けてください（「アットホーム」「やりがい」などの甘い言葉を見破ります）"
                   className="min-h-[300px] resize-none border-0 bg-transparent text-base leading-relaxed focus:ring-0 placeholder:text-muted-foreground/60"
                   disabled={isLoading}
                   maxLength={MAX_CHARACTERS}
@@ -396,7 +396,7 @@ export function JobPostingForm({ onSubmit, isLoading }: JobPostingFormProps) {
                 ) : (
                   <div className="flex items-center gap-2">
                     <Send className="h-5 w-5" />
-                    <span>AI解析を開始</span>
+                    <span>辛口診断を開始</span>
                   </div>
                 )}
               </Button>
@@ -409,9 +409,9 @@ export function JobPostingForm({ onSubmit, isLoading }: JobPostingFormProps) {
               💡 より詳細な解析のため、求人票の全文を貼り付けることをお勧めします
             </p>
             <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-              <span>✨ AI解析</span>
-              <span>🔍 隠れた意味を発見</span>
-              <span>⚡ 瞬時に結果</span>
+              <span>🔴 辛口診断</span>
+              <span>🔍 甘い言葉を暴露</span>
+              <span>⚡ 転職リスクを軽減</span>
             </div>
           </div>
         </form>
