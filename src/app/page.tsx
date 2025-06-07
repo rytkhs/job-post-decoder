@@ -19,12 +19,11 @@ import {
   AlertTriangle,
   Users,
   TrendingUp,
-  History,
   ChevronDown,
   ArrowRight
 } from 'lucide-react';
 import { Button } from './components/ui/button';
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 
 /**
  * メインページコンポーネント
@@ -38,7 +37,7 @@ export default function Home() {
     isLoading,
     error,
     analysisProgress,
-    analysisHistory,
+    // analysisHistory, // 未使用なのでコメントアウト
 
     // アクション
     setAnalysisResult,
@@ -51,7 +50,7 @@ export default function Home() {
   } = useAppStore();
 
   // ローカルステート
-  const [showHistory, setShowHistory] = useState(false);
+  // const [showHistory, setShowHistory] = useState(false); // 未使用なのでコメントアウト
   const formRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -158,17 +157,17 @@ export default function Home() {
    * @param {string} text - 求人票テキスト
    * @returns {string} - 抽出されたタイトル
    */
-  const extractJobTitle = (text: string): string => {
-    const lines = text.split('\n').filter(line => line.trim());
-    if (lines.length > 0) {
-      const firstLine = lines[0].trim();
-      if (firstLine.length <= 50) {
-        return firstLine;
-      }
-      return firstLine.substring(0, 50) + '...';
-    }
-    return '無題の求人票';
-  };
+  // const extractJobTitle = (text: string): string => { // 未使用なのでコメントアウト
+  //   const lines = text.split('\n').filter(line => line.trim());
+  //   if (lines.length > 0) {
+  //     const firstLine = lines[0].trim();
+  //     if (firstLine.length <= 50) {
+  //       return firstLine;
+  //     }
+  //     return firstLine.substring(0, 50) + '...';
+  //   }
+  //   return '無題の求人票';
+  // };
 
   /**
    * フォームセクションまでスクロール
