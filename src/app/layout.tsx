@@ -1,14 +1,12 @@
 /**
  * ルートレイアウトコンポーネント
- * アプリケーション全体のレイアウトを定義し、共通のヘッダーとフッターを配置する
- * フォント、メタデータ、基本的なスタイルもここで設定する
+ * アプリケーション全体のレイアウトを定義する
+ * シンプルなツール用のレイアウト
  */
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 
 /**
@@ -18,6 +16,7 @@ import { ErrorBoundary } from "./components/error/ErrorBoundary";
 const geistSans = Geist({
   variable: "--font-geist-sans", // CSS変数名
   subsets: ["latin"], // フォントのサブセット
+  display: 'swap', // フォント表示の最適化
 });
 
 /**
@@ -27,15 +26,24 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono", // CSS変数名
   subsets: ["latin"], // フォントのサブセット
+  display: 'swap', // フォント表示の最適化
 });
 
 /**
  * アプリケーションのメタデータ設定
- * タイトルや説明文などのOGP情報を定義
  */
 export const metadata: Metadata = {
   title: "求人票デコーダー",
-  description: "求人票の曖昧な表現を解析し、本音の可能性や確認すべきポイントを提示します",
+  description: "求人票の文章をAIで解析し、隠された意味を明らかにするツールです。",
+  keywords: ["求人票", "AI解析", "転職", "デコード"],
+};
+
+/**
+ * ビューポートの設定
+ */
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 /**
@@ -51,23 +59,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
         <ErrorBoundary level="critical">
-          {/* ヘッダーコンポーネント */}
-          <Header />
-
-          {/* メインコンテンツエリア - フレックスボックスで高さを調整 */}
-          <main className="flex-1 container mx-auto px-4 py-8">
-            <ErrorBoundary level="page">
-              {children}
-            </ErrorBoundary>
-          </main>
-
-          {/* フッターコンポーネント */}
-          <Footer />
+          {/* メインコンテンツエリア */}
+          <ErrorBoundary level="page">
+            {children}
+          </ErrorBoundary>
         </ErrorBoundary>
       </body>
     </html>

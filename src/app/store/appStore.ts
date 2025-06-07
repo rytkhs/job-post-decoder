@@ -5,10 +5,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import {
+  CriticalAnalysisResponse,
+  // 後方互換性のため既存型も残す
   EnhancedAPIResponse,
   LLMResponse,
-  EnhancedFinding,
-  Finding,
   FindingCategory,
   FeedbackType,
   AnalysisProgress
@@ -19,12 +19,15 @@ import {
  */
 interface AnalysisState {
   /** 現在の解析結果 */
-  currentResult: EnhancedAPIResponse | LLMResponse | null;
+  currentResult: CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse | null;
+  /** 原文テキスト */
+  originalText: string | null;
   /** 解析履歴 */
   analysisHistory: Array<{
     id: string;
     timestamp: string;
-    result: EnhancedAPIResponse | LLMResponse;
+    result: CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse;
+    originalText: string;
     jobTitle?: string;
   }>;
   /** 解析進捗 */
@@ -52,11 +55,10 @@ interface FilterState {
  */
 interface UIState {
   /** アクティブなタブ */
-  activeTab: 'results' | 'questions' | 'insights';
+  activeTab: 'results' | 'questions' | 'interleave';
   /** アニメーション有効/無効 */
   enableAnimations: boolean;
-  /** 詳細進捗表示 */
-  showAdvancedProgress: boolean;
+
   /** ダークモード */
   isDarkMode: boolean;
   /** コンパクト表示 */
@@ -91,11 +93,12 @@ interface QuestionState {
  */
 interface AppState extends AnalysisState, FilterState, UIState, FeedbackState, QuestionState {
   // 解析関連のアクション
-  setAnalysisResult: (result: EnhancedAPIResponse | LLMResponse | null) => void;
+  setAnalysisResult: (result: CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse | null) => void;
+  setOriginalText: (text: string | null) => void;
   setAnalysisProgress: (progress: AnalysisProgress | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  addToHistory: (result: EnhancedAPIResponse | LLMResponse, jobTitle?: string) => void;
+  addToHistory: (result: CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse, originalText: string, jobTitle?: string) => void;
   clearHistory: () => void;
   removeFromHistory: (id: string) => void;
 
@@ -107,9 +110,9 @@ interface AppState extends AnalysisState, FilterState, UIState, FeedbackState, Q
   clearFilters: () => void;
 
   // UI関連のアクション
-  setActiveTab: (tab: 'results' | 'questions' | 'insights') => void;
+  setActiveTab: (tab: 'results' | 'questions' | 'interleave') => void;
   toggleAnimations: () => void;
-  toggleAdvancedProgress: () => void;
+
   toggleDarkMode: () => void;
   toggleCompactView: () => void;
 
@@ -136,6 +139,7 @@ interface AppState extends AnalysisState, FilterState, UIState, FeedbackState, Q
 const initialState = {
   // 解析状態
   currentResult: null,
+  originalText: null,
   analysisHistory: [],
   analysisProgress: null,
   isLoading: false,
@@ -147,9 +151,9 @@ const initialState = {
   searchQuery: '',
 
   // UI状態
-  activeTab: 'results' as const,
+  activeTab: 'interleave' as const,
   enableAnimations: true,
-  showAdvancedProgress: false,
+
   isDarkMode: false,
   isCompactView: false,
 
@@ -162,6 +166,19 @@ const initialState = {
 };
 
 /**
+ * selectedCategoriesをSetに変換するヘルパー関数
+ */
+function ensureSetCategories(categories: Set<FindingCategory> | FindingCategory[] | unknown): Set<FindingCategory> {
+  if (categories instanceof Set) {
+    return categories;
+  }
+  if (Array.isArray(categories)) {
+    return new Set(categories);
+  }
+  return new Set<FindingCategory>();
+}
+
+/**
  * アプリケーションストア
  */
 export const useAppStore = create<AppState>()(
@@ -172,16 +189,18 @@ export const useAppStore = create<AppState>()(
       // 解析関連のアクション
       setAnalysisResult: (result) => set({ currentResult: result }),
 
+      setOriginalText: (text) => set({ originalText: text }),
+
       setAnalysisProgress: (progress) => set({ analysisProgress: progress }),
 
       setLoading: (loading) => set({ isLoading: loading }),
 
       setError: (error) => set({ error }),
 
-      addToHistory: (result, jobTitle) => {
+      addToHistory: (result, originalText, jobTitle) => {
         const id = `analysis-${Date.now()}`;
         const timestamp = new Date().toISOString();
-        const historyItem = { id, timestamp, result, jobTitle };
+        const historyItem = { id, timestamp, result, originalText, jobTitle };
 
         set((state) => ({
           analysisHistory: [historyItem, ...state.analysisHistory.slice(0, 9)] // 最大10件保持
@@ -195,10 +214,11 @@ export const useAppStore = create<AppState>()(
       })),
 
       // フィルター関連のアクション
-      setSelectedCategories: (categories) => set({ selectedCategories: categories }),
+      setSelectedCategories: (categories) => set({ selectedCategories: ensureSetCategories(categories) }),
 
       toggleCategory: (category) => set((state) => {
-        const newCategories = new Set(state.selectedCategories);
+        const currentCategories = ensureSetCategories(state.selectedCategories);
+        const newCategories = new Set(currentCategories);
         if (newCategories.has(category)) {
           newCategories.delete(category);
         } else {
@@ -222,7 +242,7 @@ export const useAppStore = create<AppState>()(
 
       toggleAnimations: () => set((state) => ({ enableAnimations: !state.enableAnimations })),
 
-      toggleAdvancedProgress: () => set((state) => ({ showAdvancedProgress: !state.showAdvancedProgress })),
+
 
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
 
@@ -296,7 +316,7 @@ export const useAppStore = create<AppState>()(
           set((state) => ({
             ...state,
             ...importedState,
-            selectedCategories: new Set(importedState.selectedCategories || [])
+            selectedCategories: ensureSetCategories(importedState.selectedCategories || [])
           }));
         } catch (error) {
           console.error('Failed to import state:', error);
@@ -308,32 +328,27 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => {
         // 永続化するステートを選択
-        const persistedState = {
+        return {
           enableAnimations: state.enableAnimations,
-          showAdvancedProgress: state.showAdvancedProgress,
+
           isDarkMode: state.isDarkMode,
           isCompactView: state.isCompactView,
           activeTab: state.activeTab,
           // Set型を配列に変換して保存
           selectedCategories: Array.from(state.selectedCategories)
         };
-        return persistedState;
       },
-      // zustand v5ではカスタムのserialize/deserializeを使用せず、
-      // hydrateコールバックでSet型を復元
+      // 復元時の処理
       onRehydrateStorage: () => {
-        // ストレージからのデータがロードされた後に実行される
-        return (restoredState, error) => {
+        return (state, error) => {
           if (error) {
             console.error('Error rehydrating state:', error);
             return;
           }
-          
-          if (restoredState && Array.isArray(restoredState.selectedCategories)) {
-            // Set型を復元
-            useAppStore.setState({
-              selectedCategories: new Set(restoredState.selectedCategories)
-            });
+
+          if (state) {
+            // selectedCategoriesを適切にSetに変換
+            state.selectedCategories = ensureSetCategories(state.selectedCategories);
           }
         };
       }
@@ -342,119 +357,121 @@ export const useAppStore = create<AppState>()(
 );
 
 /**
- * 解析結果に関連するセレクター
+ * 解析結果に関連するセレクター（一時的にコメントアウト - 辛口診断システム対応後に復活）
  */
-export const useAnalysisSelectors = () => {
-  const store = useAppStore();
+// export const useAnalysisSelectors = () => {
+//   const store = useAppStore();
 
-  return {
-    // 強化された解析結果を取得
-    getEnhancedFindings: (): EnhancedFinding[] => {
-      if (!store.currentResult?.findings) return [];
+//   return {
+//     // 強化された解析結果を取得
+//     getEnhancedFindings: (): EnhancedFinding[] => {
+//       if (!store.currentResult?.findings) return [];
 
-      return store.currentResult.findings.map((finding) => {
-        // 既にEnhancedFindingの場合はそのまま返す
-        if ('severity' in finding && 'category' in finding) {
-          return finding as EnhancedFinding;
-        }
+//       return store.currentResult.findings.map((finding) => {
+//         // 既にEnhancedFindingの場合はそのまま返す
+//         if ('severity' in finding && 'category' in finding) {
+//           return finding as EnhancedFinding;
+//         }
 
-        // 基本的なFindingの場合はデフォルト値で拡張
-        return {
-          ...finding,
-          severity: 'medium' as const,
-          category: 'other' as const,
-          confidence: 0.7,
-          related_keywords: [],
-          suggested_questions: []
-        };
-      });
-    },
+//         // 基本的なFindingの場合はデフォルト値で拡張
+//         return {
+//           ...finding,
+//           severity: 'medium' as const,
+//           category: 'other' as const,
+//           confidence: 0.7,
+//           related_keywords: [],
+//           suggested_questions: []
+//         };
+//       });
+//     },
 
-    // フィルタリングされた結果を取得
-    getFilteredFindings: (): EnhancedFinding[] => {
-      const store = useAppStore.getState();
-      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
-        // 既にEnhancedFindingの場合はそのまま返す
-        if ('severity' in finding && 'category' in finding) {
-          return finding as EnhancedFinding;
-        }
+//     // フィルタリングされた結果を取得
+//     getFilteredFindings: (): EnhancedFinding[] => {
+//       const storeState = useAppStore.getState();
+//       const findings = storeState.currentResult?.findings ? storeState.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
+//         // 既にEnhancedFindingの場合はそのまま返す
+//         if ('severity' in finding && 'category' in finding) {
+//           return finding as EnhancedFinding;
+//         }
 
-        // 基本的なFindingの場合はデフォルト値で拡張
-        return {
-          ...finding,
-          severity: 'medium' as const,
-          category: 'other' as const,
-          confidence: 0.7,
-          related_keywords: [],
-          suggested_questions: []
-        };
-      }) : [];
+//         // 基本的なFindingの場合はデフォルト値で拡張
+//         return {
+//           ...finding,
+//           severity: 'medium' as const,
+//           category: 'other' as const,
+//           confidence: 0.7,
+//           related_keywords: [],
+//           suggested_questions: []
+//         };
+//       }) : [];
 
-      return findings.filter(finding => {
-        // カテゴリフィルター
-        if (store.selectedCategories.size > 0 && !store.selectedCategories.has(finding.category)) {
-          return false;
-        }
+//       const selectedCategories = ensureSetCategories(storeState.selectedCategories);
 
-        // 重要度フィルター
-        if (store.severityFilter !== 'all' && finding.severity !== store.severityFilter) {
-          return false;
-        }
+//       return findings.filter(finding => {
+//         // カテゴリフィルター
+//         if (selectedCategories.size > 0 && !selectedCategories.has(finding.category)) {
+//           return false;
+//         }
 
-        // 検索クエリフィルター
-        if (store.searchQuery) {
-          const query = store.searchQuery.toLowerCase();
-          return (
-            finding.original_phrase.toLowerCase().includes(query) ||
-            finding.potential_realities.some(reality => reality.toLowerCase().includes(query)) ||
-            finding.related_keywords?.some((keyword: string) =>
-              keyword.toLowerCase().includes(query)
-            )
-          );
-        }
+//         // 重要度フィルター
+//         if (storeState.severityFilter !== 'all' && finding.severity !== storeState.severityFilter) {
+//           return false;
+//         }
 
-        return true;
-      });
-    },
+//         // 検索クエリフィルター
+//         if (storeState.searchQuery) {
+//           const query = storeState.searchQuery.toLowerCase();
+//           return (
+//             finding.original_phrase.toLowerCase().includes(query) ||
+//             finding.potential_realities.some(reality => reality.toLowerCase().includes(query)) ||
+//             finding.related_keywords?.some((keyword: string) =>
+//               keyword.toLowerCase().includes(query)
+//             )
+//           );
+//         }
 
-    // 統計情報を取得
-    getStatistics: () => {
-      const store = useAppStore.getState();
-      const findings = store.currentResult?.findings ? store.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
-        // 既にEnhancedFindingの場合はそのまま返す
-        if ('severity' in finding && 'category' in finding) {
-          return finding as EnhancedFinding;
-        }
+//         return true;
+//       });
+//     },
 
-        // 基本的なFindingの場合はデフォルト値で拡張
-        return {
-          ...finding,
-          severity: 'medium' as const,
-          category: 'other' as const,
-          confidence: 0.7,
-          related_keywords: [],
-          suggested_questions: []
-        };
-      }) : [];
+//     // 統計情報を取得
+//     getStatistics: () => {
+//       const storeState = useAppStore.getState();
+//       const findings = storeState.currentResult?.findings ? storeState.currentResult.findings.map((finding: Finding | EnhancedFinding) => {
+//         // 既にEnhancedFindingの場合はそのまま返す
+//         if ('severity' in finding && 'category' in finding) {
+//           return finding as EnhancedFinding;
+//         }
 
-      const categoryStats = findings.reduce((acc, finding) => {
-        acc[finding.category] = (acc[finding.category] || 0) + 1;
-        return acc;
-      }, {} as Record<FindingCategory, number>);
+//         // 基本的なFindingの場合はデフォルト値で拡張
+//         return {
+//           ...finding,
+//           severity: 'medium' as const,
+//           category: 'other' as const,
+//           confidence: 0.7,
+//           related_keywords: [],
+//           suggested_questions: []
+//         };
+//       }) : [];
 
-      const severityStats = findings.reduce((acc, finding) => {
-        acc[finding.severity] = (acc[finding.severity] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+//       const categoryStats = findings.reduce((acc, finding) => {
+//         acc[finding.category] = (acc[finding.category] || 0) + 1;
+//         return acc;
+//       }, {} as Record<FindingCategory, number>);
 
-      return {
-        total: findings.length,
-        categoryStats,
-        severityStats
-      };
-    }
-  };
-};
+//       const severityStats = findings.reduce((acc, finding) => {
+//         acc[finding.severity] = (acc[finding.severity] || 0) + 1;
+//         return acc;
+//       }, {} as Record<string, number>);
+
+//       return {
+//         total: findings.length,
+//         categoryStats,
+//         severityStats
+//       };
+//     }
+//   };
+// };
 
 /**
  * ストアの型エクスポート

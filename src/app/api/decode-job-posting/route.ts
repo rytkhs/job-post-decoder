@@ -1,6 +1,6 @@
 /**
- * 求人票デコーダー API
- * 求人票テキストを受け取り、AIを使用して解析し、結果を返すAPIルート
+ * 求人票辛口診断 API
+ * 求人票テキストを受け取り、辛口キャリアアドバイザーの視点で解析し、結果を返すAPIルート
  */
 
 export const runtime = 'edge';
@@ -8,13 +8,9 @@ export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import {
-  EnhancedAPIResponse,
+  CriticalAnalysisResponse,
   DecodingRequest,
-  APIErrorResponse,
-  EnhancedFinding,
-  InterviewQuestions,
-  FindingCategory,
-  RiskLevel
+  APIErrorResponse
 } from '../../types/api';
 
 /**
@@ -42,41 +38,32 @@ interface ExtendedAPIErrorResponse extends APIErrorResponse {
 }
 
 // 求人票テキストの最小文字数制限
-// 短すぎるテキストは有効な解析が難しいため、最小長を設定
-const MIN_TEXT_LENGTH = 20;
+const MIN_TEXT_LENGTH = 50;
 
 // 最大文字数制限（トークン制限対策）
-const MAX_TEXT_LENGTH = 10000;
+const MAX_TEXT_LENGTH = 5000;
 
 // リクエストタイムアウト（3分）
 const REQUEST_TIMEOUT = 180000;
 
-// プロンプトテンプレート（強化版）
-const ENHANCED_PROMPT_TEMPLATE = `
-あなたは経験豊富なキャリアアドバイザーで、求人票の裏にある本音を読み解く専門家です。
-以下の求人票テキストを分析し、求職者が注意すべき表現や曖昧な記述を特定してください。
+// システムプロンプト（環境変数から取得、フォールバック用基本プロンプト付き）
+const getSystemPrompt = (): string => {
+  // 本番環境では詳細なプロンプトを環境変数から取得
+  const envPrompt = process.env.CRITICAL_ADVISOR_SYSTEM_PROMPT;
 
-特に以下のカテゴリに注目して分析してください：
-1. compensation: 給与・待遇に関する表現（例：「経験・能力に応じて」「インセンティブあり」）
-2. worklife: 勤務時間や労働環境に関する表現（例：「繁忙期は残業あり」「フレックス勤務」）
-3. culture: 職場環境や社風に関する表現（例：「アットホーム」「風通しの良い」）
-4. growth: 成長機会やキャリアに関する表現（例：「成長できる環境」「スキルアップ支援」）
-5. other: その他の注意すべき表現
+  if (envPrompt) {
+    return envPrompt;
+  }
 
-各表現について、以下を提供してください：
-1. 「本音の可能性」：その表現が示唆する可能性のある実態や裏事情を複数提示してください。ポジティブな可能性とネガティブな可能性の両方を含めてください。
-2. 「確認すべきポイント」：面接や入社前に確認すべき具体的な質問やチェックポイントを提案してください。
-3. 「重要度」：high（要注意）、medium（注意）、low（軽微）で分類してください。
-4. 「カテゴリ」：上記5つのカテゴリのいずれかに分類してください。
-5. 「確信度」：0.0-1.0の範囲でAIの確信度を示してください。
-6. 「関連キーワード」：その表現に関連するキーワードを3-5個提示してください。
-7. 「面接質問例」：面接で使える具体的な質問を2-3個提案してください。
+  // デバッグ用警告（開発環境でのみ表示）
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('⚠️  CRITICAL_ADVISOR_SYSTEM_PROMPT environment variable not found. Using basic fallback prompt.');
+  }
 
-分析にあたっては、以下の点に注意してください：
-- 客観的かつ中立的な視点で分析し、企業を不当に買い被せるような断定的な表現は避けてください。
-- 「本音の可能性」はあくまで可能性であり、確定的な事実として説明しないようにしてください。
-- 各表現について、最低2つ以上の「本音の可能性」と「確認すべきポイント」を提供してください。
-- 特に注意すべき表現が見つからない場合は、findings 配列を空にしてください。
+  // フォールバック用基本プロンプト
+  return `
+あなたは求人票を分析するAIアシスタントです。
+求職者の視点に立って、求人票の内容を客観的に分析し、注意点や確認すべきポイントを提示してください。
 
 求人票テキスト:
 """
@@ -86,70 +73,36 @@ const ENHANCED_PROMPT_TEMPLATE = `
 以下のJSON形式で出力してください（必ず有効なJSON形式で出力してください）:
 
 {
-  "findings": [
+  "overall_diagnosis": "この求人票について総合的な所見",
+  "key_findings": [
     {
-      "original_phrase": "アットホームな職場",
-      "potential_realities": [
-        "人間関係が非常に密で、プライベートな交流も多い可能性がある。",
-        "チームワークや協調性が極めて重視され、個人での成果よりもチーム全体の調和が優先される文化かもしれない。"
-      ],
-      "points_to_check": [
-        "具体的にどのような点がアットホームだと感じられるか、例を教えていただけますか？",
-        "社内コミュニケーションや意思決定の方法についてもお聞かせください。"
-      ],
-      "severity": "medium",
-      "category": "culture",
-      "confidence": 0.85,
-      "related_keywords": ["職場環境", "社風", "人間関係", "チームワーク"],
-      "suggested_questions": [
-        "チーム内での意見の相違があった場合、どのように解決されますか？",
-        "個人の成果とチームの成果、どちらがより評価されますか？"
-      ]
+      "phrase": "注目すべきフレーズ",
+      "danger_level": "🟡",
+      "one_line_diagnosis": "簡潔な診断",
+      "hidden_reality": "考えられる背景",
+      "how_to_check": "面接での確認方法",
+      "real_story": "一般的によくある事例"
     }
   ],
-  "summary": {
-    "total_findings": 1,
-    "risk_level": "medium",
-    "categories_detected": ["culture"],
-    "overall_recommendation": "この求人票には中程度の注意が必要な表現が含まれています。特に企業文化について詳しく確認することをお勧めします。"
-  },
-  "interview_questions": [
-    {
-      "category": "企業文化",
-      "questions": [
-        "アットホームな職場とは、具体的にどのような点を指していますか？",
-        "社内でのコミュニケーションはどのような形で行われていますか？"
-      ]
-    }
-  ],
-  "metadata": {
-    "analysis_timestamp": "${new Date().toISOString()}",
-    "model_used": "gpt-4",
-    "confidence_score": 0.85
+  "interview_strategy": "面接での確認戦略",
+  "red_flags_summary": "注意点のまとめ",
+  "recommendation": "apply/caution/avoid",
+  "danger_stats": {
+    "high_risk_count": 0,
+    "medium_risk_count": 0,
+    "low_risk_count": 0
   }
 }
 
+危険度は 🔴（高危険）、🟡（要注意）、🟢（問題なし）で表現してください。
 JSONのみを出力し、他の説明は不要です。
 `;
-
-/**
- * カテゴリ名の日本語マッピング
- */
-const CATEGORY_LABELS: Record<FindingCategory, string> = {
-  compensation: '給与・待遇',
-  worklife: '労働環境',
-  culture: '企業文化',
-  growth: '成長機会',
-  other: 'その他'
 };
 
 /**
  * エラー分類ユーティリティ
  */
 class APIErrorClassifier {
-  /**
-   * エラーを分類してAPIエラーレスポンスを生成
-   */
   static classifyError(error: Error | { status?: number; message?: string; name?: string }): ExtendedAPIErrorResponse {
     let errorType: APIErrorType;
     let errorCode: string;
@@ -165,7 +118,7 @@ class APIErrorClassifier {
       errorType = APIErrorType.RATE_LIMIT_ERROR;
       errorCode = 'RATE_LIMIT_EXCEEDED';
       message = 'リクエスト制限に達しました。しばらく待ってから再試行してください。';
-      retryAfter = 60; // 60秒後に再試行
+      retryAfter = 60;
     } else if (errorStatus === 401 || errorMessage.includes('authentication')) {
       errorType = APIErrorType.AUTHENTICATION_ERROR;
       errorCode = 'AUTHENTICATION_FAILED';
@@ -214,9 +167,6 @@ class APIErrorClassifier {
     return response;
   }
 
-  /**
-   * HTTPステータスコードを取得
-   */
   static getStatusCode(errorResponse: ExtendedAPIErrorResponse): number {
     switch (errorResponse.error_type) {
       case APIErrorType.VALIDATION_ERROR:
@@ -224,7 +174,7 @@ class APIErrorClassifier {
       case APIErrorType.RATE_LIMIT_ERROR:
         return 429;
       case APIErrorType.AUTHENTICATION_ERROR:
-        return 500; // 内部エラーとして扱う
+        return 500;
       case APIErrorType.TIMEOUT_ERROR:
         return 504;
       case APIErrorType.NETWORK_ERROR:
@@ -254,7 +204,6 @@ async function fetchWithTimeout(
     openai.chat.completions.create(requestParams)
       .then(response => {
         clearTimeout(timeoutId);
-        // ストリーミングレスポンスではないことを確認
         if ('choices' in response && Array.isArray(response.choices)) {
           resolve(response as OpenAI.Chat.Completions.ChatCompletion);
         } else {
@@ -269,67 +218,7 @@ async function fetchWithTimeout(
 }
 
 /**
- * 全体的なリスクレベルを計算する関数
- */
-function calculateOverallRisk(findings: EnhancedFinding[]): RiskLevel {
-  if (findings.length === 0) return 'low';
-
-  const highCount = findings.filter(f => f.severity === 'high').length;
-  const mediumCount = findings.filter(f => f.severity === 'medium').length;
-
-  if (highCount > 0 || (mediumCount >= 3)) return 'high';
-  if (mediumCount > 0) return 'medium';
-  return 'low';
-}
-
-/**
- * 総合的な推奨事項を生成する関数
- */
-function generateRecommendation(findings: EnhancedFinding[], riskLevel: RiskLevel): string {
-  if (findings.length === 0) {
-    return 'この求人票には特に注意すべき表現は見つかりませんでした。一般的な確認事項について面接で質問することをお勧めします。';
-  }
-
-  const categories = [...new Set(findings.map(f => f.category))];
-  const categoryLabels = categories.map(c => CATEGORY_LABELS[c]).join('、');
-
-  switch (riskLevel) {
-    case 'high':
-      return `この求人票には高い注意が必要な表現が含まれています。特に${categoryLabels}について詳しく確認し、慎重に検討することを強くお勧めします。`;
-    case 'medium':
-      return `この求人票には中程度の注意が必要な表現が含まれています。特に${categoryLabels}について詳しく確認することをお勧めします。`;
-    case 'low':
-      return `この求人票には軽微な注意点が含まれています。${categoryLabels}について確認しておくと良いでしょう。`;
-  }
-}
-
-/**
- * カテゴリ別の質問を生成する関数
- */
-function generateInterviewQuestions(findings: EnhancedFinding[]): InterviewQuestions[] {
-  const questionsByCategory: Record<string, Set<string>> = {};
-
-  findings.forEach(finding => {
-    const categoryLabel = CATEGORY_LABELS[finding.category];
-    if (!questionsByCategory[categoryLabel]) {
-      questionsByCategory[categoryLabel] = new Set();
-    }
-
-    finding.suggested_questions.forEach(question => {
-      questionsByCategory[categoryLabel].add(question);
-    });
-  });
-
-  return Object.entries(questionsByCategory).map(([category, questionsSet]) => ({
-    category,
-    questions: Array.from(questionsSet)
-  }));
-}
-
-/**
- * POSTハンドラー - 求人票テキストを受け取り、AIで解析し、結果を返す
- * @param {Request} request - 求人票テキストを含むPOSTリクエスト
- * @returns {Promise<NextResponse>} - 解析結果またはエラーメッセージを含むレスポンス
+ * POSTハンドラー - 求人票テキストを受け取り、辛口診断を実行し、結果を返す
  */
 export async function POST(request: Request) {
   try {
@@ -386,16 +275,15 @@ export async function POST(request: Request) {
     });
 
     // 4. プロンプトの生成
-    const prompt = ENHANCED_PROMPT_TEMPLATE.replace('{jobPostingText}', body.text);
+    const prompt = getSystemPrompt().replace('{jobPostingText}', body.text);
 
     // 5. LLM APIの呼び出し（タイムアウト付き）
     const response = await fetchWithTimeout(openai, {
       model: process.env.MODEL_NAME || 'gpt-3.5-turbo',
       messages: [
-        { role: 'system', content: 'あなたは経験豊富なキャリアアドバイザーです。' },
-        { role: 'user', content: prompt }
+        { role: 'system', content: prompt }
       ],
-      temperature: 0.7,
+      temperature: 0.8,
       response_format: { type: 'json_object' },
     });
 
@@ -407,36 +295,24 @@ export async function POST(request: Request) {
     }
 
     // 7. JSONとしてパースし、型定義を適用
-    const llmResponse = JSON.parse(content) as EnhancedAPIResponse;
+    const analysisResult = JSON.parse(content) as CriticalAnalysisResponse;
 
-    // 8. レスポンスの後処理と検証
-    const findings = llmResponse.findings || [];
-    const riskLevel = calculateOverallRisk(findings);
-    const categories = [...new Set(findings.map(f => f.category))];
-    const recommendation = generateRecommendation(findings, riskLevel);
-    const interviewQuestions = generateInterviewQuestions(findings);
+    // 8. レスポンスの検証と後処理
+    if (!analysisResult.key_findings) {
+      analysisResult.key_findings = [];
+    }
 
-    // 9. 強化されたレスポンスの構築
-    const enhancedResponse: EnhancedAPIResponse = {
-      findings,
-      summary: {
-        total_findings: findings.length,
-        risk_level: riskLevel,
-        categories_detected: categories,
-        overall_recommendation: recommendation
-      },
-      interview_questions: interviewQuestions,
-      metadata: {
-        analysis_timestamp: new Date().toISOString(),
-        model_used: process.env.MODEL_NAME || 'gpt-3.5-turbo',
-        confidence_score: findings.length > 0
-          ? findings.reduce((sum, f) => sum + f.confidence, 0) / findings.length
-          : 0
-      }
-    };
+    if (!analysisResult.danger_stats) {
+      const findings = analysisResult.key_findings;
+      analysisResult.danger_stats = {
+        high_risk_count: findings.filter(f => f.danger_level === '🔴').length,
+        medium_risk_count: findings.filter(f => f.danger_level === '🟡').length,
+        low_risk_count: findings.filter(f => f.danger_level === '🟢').length,
+      };
+    }
 
-    // 10. クライアントへのレスポンスを返す
-    return NextResponse.json(enhancedResponse);
+    // 9. クライアントへのレスポンスを返す
+    return NextResponse.json(analysisResult);
 
   } catch (error) {
     // エラー処理
