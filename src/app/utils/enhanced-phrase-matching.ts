@@ -473,6 +473,45 @@ export async function checkContainment(text: string, phrase: string, options: Ma
 }
 
 /**
+ * 単一文字の正規化を行う
+ * 文字単位の変換に特化した関数
+ */
+function normalizeChar(char: string): string {
+  if (!char) return '';
+
+  // 全角英数字を半角に
+  if (/[０-９]/.test(char)) {
+    return String.fromCharCode(char.charCodeAt(0) - 0xFEE0);
+  }
+  if (/[Ａ-Ｚａ-ｚ]/.test(char)) {
+    return String.fromCharCode(char.charCodeAt(0) - 0xFEE0);
+  }
+
+  // 全角記号を半角に（一部）
+  switch (char) {
+    case '！': return '!';
+    case '？': return '?';
+    case '：': return ':';
+    case '；': return ';';
+    case '／': return '/';
+    case '￥': return '\\';
+    case '（': return '(';
+    case '）': return ')';
+    case '［': return '[';
+    case '］': return ']';
+    case '｛': return '{';
+    case '｝': return '}';
+    case '、': return ',';
+    case '。': return '.';
+    // 空白文字は保持
+    case ' ':
+    case '　':
+      return ' ';
+    default: return char;
+  }
+}
+
+/**
  * findOriginalPosition関数の修正版
  * より正確な位置逆算を実現
  */
@@ -490,10 +529,17 @@ function findOriginalPositionImproved(
     mappingTable.push({ original: i, normalized: normalizedPos });
 
     const char = originalText[i];
-    const normalizedChar = normalizeText(char);
+    // 文字単位の正規化に適した関数を使用
+    const normalizedChar = normalizeChar(char);
 
-    if (normalizedChar.length > 0) {
-      normalizedPos += normalizedChar.length;
+    // 正規化後の文字が空白でない場合のみカウント
+    if (normalizedChar) {
+      // 連続する空白を単一の空白に正規化する処理を模倣
+      if (!(normalizedChar === ' ' && normalizedPos > 0 &&
+            mappingTable[mappingTable.length - 2]?.normalized === normalizedPos - 1 &&
+            normalizeChar(originalText[i - 1]) === ' ')) {
+        normalizedPos++;
+      }
     }
   }
 
