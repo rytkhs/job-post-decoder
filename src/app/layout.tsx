@@ -59,6 +59,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Google AnalyticsのトラッキングIDを環境変数から取得
+  const gaId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
+
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
@@ -76,6 +79,8 @@ export default function RootLayout({
             {children}
           </ErrorBoundary>
         </ErrorBoundary>
+        {/* Google Analytics 4 - 環境変数が設定されている場合のみ読み込み */}
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   );
