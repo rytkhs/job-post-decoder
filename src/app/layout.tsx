@@ -6,6 +6,7 @@
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 
@@ -33,9 +34,9 @@ const geistMono = Geist_Mono({
  * アプリケーションのメタデータ設定
  */
 export const metadata: Metadata = {
-  title: "求人票デコーダー",
+  title: "ブラック求人チェッカー",
   description: "求人票の文章をAIで解析し、隠された意味を明らかにするツールです。",
-  keywords: ["求人票", "AI解析", "転職", "デコード"],
+  keywords: ["求人票", "AI解析", "転職", "ブラック求人", "ブラック企業"],
 };
 
 /**
@@ -61,7 +62,10 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="32x32" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-32x32.svg" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
