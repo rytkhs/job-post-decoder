@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, Moon, Sun, Menu, X } from 'lucide-react';
+import { Shield, Moon, Sun, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 
 /**
@@ -98,11 +98,7 @@ export function Header() {
               {/* アプリアイコン - 警告・チェックのイメージ */}
               <div className="relative">
                 <Shield
-                  className="h-8 w-8 text-red-500 transition-all duration-300 group-hover:text-red-600 group-hover:rotate-12"
-                  aria-hidden="true"
-                />
-                <AlertTriangle
-                  className="absolute -top-1 -right-1 h-4 w-4 text-yellow-500 opacity-0 group-hover:opacity-100 transition-all duration-300 animate-pulse"
+                  className="h-8 w-8 text-red-500 transition-all duration-300 hover:text-red-600 hover:rotate-12"
                   aria-hidden="true"
                 />
               </div>
