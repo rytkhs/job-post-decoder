@@ -1,0 +1,179 @@
+diff --git a/README.md b/README.md
+index 915e7db..69334bd 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # ブラック求人チェッカー
+ 
+-[**アプリケーションはこちら**](https://job-post-decoder.vercel.app/)
++[**アプリケーションはこちら**](https://black-checker.vercel.app/)
+ 
+ ブラック求人チェッカーは、求人票の危険な表現や注意すべき箇所を AI が辛口診断し、求職者を企業の甘い言葉から守るための Web アプリケーションです。
+ 
+diff --git a/public/favicon.ico b/public/favicon.ico
+new file mode 100644
+index 0000000..ec5f3cd
+Binary files /dev/null and b/public/favicon.ico differ
+diff --git a/public/robots.txt b/public/robots.txt
+new file mode 100644
+index 0000000..9740279
+--- /dev/null
++++ b/public/robots.txt
+@@ -0,0 +1,10 @@
++User-agent: *
++Allow: /
++
++# Sitemap
++Sitemap: https://black-checker.vercel.app/sitemap.xml
++
++# Block access to internal files
++Disallow: /api/
++Disallow: /_next/
++Disallow: /admin/
+diff --git a/public/site.webmanifest b/public/site.webmanifest
+index bc89135..329748a 100644
+--- a/public/site.webmanifest
++++ b/public/site.webmanifest
+@@ -1,12 +1,17 @@
+ {
+   "name": "ブラック求人チェッカー",
+   "short_name": "求人チェッカー",
+-  "description": "求人票の文章をAIで解析し、隠された意味を明らかにするツールです。",
++  "description": "求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
+   "start_url": "/",
+   "display": "standalone",
+   "background_color": "#fafafa",
+   "theme_color": "#ef4444",
+   "icons": [
++    {
++      "src": "/favicon.ico",
++      "sizes": "16x16 32x32",
++      "type": "image/x-icon"
++    },
+     {
+       "src": "/favicon.svg",
+       "sizes": "any",
+diff --git a/public/sitemap.xml b/public/sitemap.xml
+new file mode 100644
+index 0000000..191b4a2
+--- /dev/null
++++ b/public/sitemap.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
++  <url>
++    <loc>https://black-checker.vercel.app</loc>
++    <lastmod>2024-06-17</lastmod>
++    <changefreq>weekly</changefreq>
++    <priority>1.0</priority>
++  </url>
++</urlset>
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index ca341fc..f20309b 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -34,9 +34,69 @@ const geistMono = Geist_Mono({
+  * アプリケーションのメタデータ設定
+  */
+ export const metadata: Metadata = {
+-  title: "ブラック求人チェッカー",
+-  description: "求人票の文章をAIで解析し、隠された意味を明らかにするツールです。",
+-  keywords: ["求人票", "AI解析", "転職", "ブラック求人", "ブラック企業"],
++  metadataBase: new URL('https://black-checker.vercel.app'),
++  title: "ブラック求人チェッカー | AI求人票解析ツール",
++  description: "求人票の甘い言葉に騙されるな！「アットホームな職場」「やりがいのある仕事」など、企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
++  keywords: ["求人票", "AI解析", "転職", "ブラック求人", "ブラック企業", "求人チェック", "転職支援"],
++  authors: [{ name: "ブラック求人チェッカー" }],
++  creator: "ブラック求人チェッカー",
++  publisher: "ブラック求人チェッカー",
++  robots: {
++    index: true,
++    follow: true,
++    googleBot: {
++      index: true,
++      follow: true,
++      'max-video-preview': -1,
++      'max-image-preview': 'large',
++      'max-snippet': -1,
++    },
++  },
++  openGraph: {
++    type: 'website',
++    locale: 'ja_JP',
++    url: 'https://black-checker.vercel.app',
++    siteName: 'ブラック求人チェッカー',
++    title: 'ブラック求人チェッカー | AI求人票解析ツール',
++    description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
++    images: [
++      {
++        url: '/apple-touch-icon.svg',
++        width: 180,
++        height: 180,
++        alt: 'ブラック求人チェッカー',
++      },
++    ],
++  },
++  twitter: {
++    card: 'summary_large_image',
++    site: '@tkhshkt',
++    creator: '@tkhshtkh',
++    title: 'ブラック求人チェッカー | AI求人票解析ツール',
++    description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
++    images: ['/apple-touch-icon.svg'],
++  },
++  icons: {
++    icon: [
++      { url: '/favicon.ico', sizes: '16x16 32x32' },
++      { url: '/favicon.svg', type: 'image/svg+xml' },
++      { url: '/favicon-32x32.svg', sizes: '32x32', type: 'image/svg+xml' },
++    ],
++    apple: [
++      { url: '/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
++    ],
++    other: [
++      { rel: 'mask-icon', url: '/favicon.svg', color: '#ef4444' },
++    ],
++  },
++  manifest: '/site.webmanifest',
++  alternates: {
++    canonical: 'https://black-checker.vercel.app',
++  },
++  verification: {
++    google: 'b2oalEAL86dlbiGQtD8N9qZTqC9qrbgeFm96ZEN8jSw',
++  },
++  category: 'technology',
+ };
+ 
+ /**
+@@ -69,6 +129,31 @@ export default function RootLayout({
+         <link rel="icon" href="/favicon-32x32.svg" sizes="32x32" />
+         <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+         <link rel="manifest" href="/site.webmanifest" />
++        <script
++          type="application/ld+json"
++          dangerouslySetInnerHTML={{
++            __html: JSON.stringify({
++              "@context": "https://schema.org",
++              "@type": "WebApplication",
++              "name": "ブラック求人チェッカー",
++              "description": "求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
++              "url": "https://black-checker.vercel.app",
++              "applicationCategory": "BusinessApplication",
++              "operatingSystem": "Web",
++              "offers": {
++                "@type": "Offer",
++                "price": "0",
++                "priceCurrency": "JPY"
++              },
++              "author": {
++                "@type": "Organization",
++                "name": "ブラック求人チェッカー"
++              },
++              "keywords": "求人票,AI解析,転職,ブラック求人,ブラック企業,求人チェック,転職支援",
++              "inLanguage": "ja-JP"
++            })
++          }}
++        />
+       </head>
+       <body
+         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
