@@ -71,7 +71,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@tkhshkt',
-    creator: '@tkhshtkh',
+    creator: '@tkhshkt',
     title: 'ブラック求人チェッカー | AI求人票解析ツール',
     description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
     images: ['/apple-touch-icon.svg'],
