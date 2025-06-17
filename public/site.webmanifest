@@ -1,12 +1,17 @@
 {
   "name": "ブラック求人チェッカー",
   "short_name": "求人チェッカー",
-  "description": "求人票の文章をAIで解析し、隠された意味を明らかにするツールです。",
+  "description": "求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fafafa",
   "theme_color": "#ef4444",
   "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    },
     {
       "src": "/favicon.svg",
       "sizes": "any",
