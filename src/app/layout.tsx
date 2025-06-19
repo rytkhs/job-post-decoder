@@ -4,7 +4,7 @@
  * シンプルなツール用のレイアウト
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
@@ -35,10 +35,14 @@ const geistMono = Geist_Mono({
  */
 export const metadata: Metadata = {
   metadataBase: new URL('https://black-checker.vercel.app'),
-  title: "ブラック求人チェッカー | AI求人票解析ツール",
+
+  title: {
+    default: "ブラック求人チェッカー | AI求人票解析ツール",
+    template: "%s | ブラック求人チェッカー",
+  },
   description: "求人票の甘い言葉に騙されるな！「アットホームな職場」「やりがいのある仕事」など、企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
   keywords: ["求人票", "AI解析", "転職", "ブラック求人", "ブラック企業", "求人チェック", "転職支援"],
-  authors: [{ name: "ブラック求人チェッカー" }],
+  authors: [{ name: "ブラック求人チェッカー", url: "https://black-checker.vercel.app" }], // urlを追加するとより親切
   creator: "ブラック求人チェッカー",
   publisher: "ブラック求人チェッカー",
   robots: {
@@ -61,10 +65,10 @@ export const metadata: Metadata = {
     description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
     images: [
       {
-        url: '/apple-touch-icon.svg',
-        width: 180,
-        height: 180,
-        alt: 'ブラック求人チェッカー',
+        url: '/ogp.svg',
+        width: 1200,
+        height: 630,
+        alt: 'ブラック求人チェッカー | AI求人票解析ツール',
       },
     ],
   },
@@ -74,19 +78,18 @@ export const metadata: Metadata = {
     creator: '@tkhshkt',
     title: 'ブラック求人チェッカー | AI求人票解析ツール',
     description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
-    images: ['/apple-touch-icon.svg'],
+    images: ['/ogp.svg'],
   },
   icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '16x16 32x32' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon-32x32.svg', sizes: '32x32', type: 'image/svg+xml' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
-    ],
+    icon: '/favicon.ico',
+    shortcut: '/favicon.svg',
+    apple: '/apple-touch-icon.svg',
     other: [
-      { rel: 'mask-icon', url: '/favicon.svg', color: '#ef4444' },
+      {
+        rel: 'mask-icon',
+        url: '/favicon.svg',
+        color: '#ef4444',
+      },
     ],
   },
   manifest: '/site.webmanifest',
@@ -102,7 +105,7 @@ export const metadata: Metadata = {
 /**
  * ビューポートの設定
  */
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
 };
@@ -124,37 +127,6 @@ export default function RootLayout({
 
   return (
     <html lang="ja" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon-32x32.svg" sizes="32x32" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
-        <link rel="manifest" href="/site.webmanifest" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              "name": "ブラック求人チェッカー",
-              "description": "求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
-              "url": "https://black-checker.vercel.app",
-              "applicationCategory": "BusinessApplication",
-              "operatingSystem": "Web",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "JPY"
-              },
-              "author": {
-                "@type": "Organization",
-                "name": "ブラック求人チェッカー"
-              },
-              "keywords": "求人票,AI解析,転職,ブラック求人,ブラック企業,求人チェック,転職支援",
-              "inLanguage": "ja-JP"
-            })
-          }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
@@ -164,7 +136,6 @@ export default function RootLayout({
             {children}
           </ErrorBoundary>
         </ErrorBoundary>
-        {/* Google Analytics 4 - 環境変数が設定されている場合のみ読み込み */}
         {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
