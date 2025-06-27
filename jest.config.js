@@ -12,7 +12,7 @@ const customJestConfig = {
   // テスト環境のセットアップファイル
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // テスト環境
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'node',
   // モジュール名のエイリアス
   moduleNameMapper: {
     // Handle CSS imports (with CSS modules)

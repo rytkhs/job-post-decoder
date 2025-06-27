@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   },
   description: "求人票の甘い言葉に騙されるな！「アットホームな職場」「やりがいのある仕事」など、企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
   keywords: ["求人票", "AI解析", "転職", "ブラック求人", "ブラック企業", "求人チェック", "転職支援"],
-  authors: [{ name: "ブラック求人チェッカー", url: "https://black-checker.vercel.app" }], // urlを追加するとより親切
+  authors: [{ name: "ブラック求人チェッカー", url: "https://black-checker.vercel.app" }],
   creator: "ブラック求人チェッカー",
   publisher: "ブラック求人チェッカー",
   robots: {
