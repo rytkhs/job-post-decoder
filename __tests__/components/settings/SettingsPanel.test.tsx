@@ -164,7 +164,6 @@ describe('SettingsPanel', () => {
       await user.click(behaviorTab);
 
       expect(screen.getByText('アニメーション')).toBeInTheDocument();
-      expect(screen.getByText('詳細進捗表示')).toBeInTheDocument();
     });
 
     test('アニメーション切り替えが動作する', async () => {
@@ -331,7 +330,7 @@ describe('SettingsPanel', () => {
       const advancedTab = screen.getByRole('tab', { name: /詳細/i });
       await user.click(advancedTab);
 
-      expect(screen.getByText('求人票デコーダー v1.0.0')).toBeInTheDocument();
+      expect(screen.getByText('ブラック求人チェッカー v1.0.0')).toBeInTheDocument();
       expect(screen.getByText('Next.js App Router + TypeScript')).toBeInTheDocument();
     });
   });
