@@ -172,14 +172,12 @@ export function SettingsPanel({ isOpen, onClose, className = '' }: SettingsPanel
   // Zustandストアから状態とアクションを取得
   const {
     enableAnimations,
-
     isDarkMode,
     isCompactView,
     analysisHistory,
     feedbackHistory,
     customQuestions,
     toggleAnimations,
-
     toggleDarkMode,
     toggleCompactView,
     clearHistory,
@@ -420,7 +418,6 @@ export function SettingsPanel({ isOpen, onClose, className = '' }: SettingsPanel
                   <Label>アニメーションを有効にする</Label>
                 </div>
               </SettingItem>
-
 
             </TabsContent>
 

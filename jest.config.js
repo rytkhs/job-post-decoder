@@ -1,4 +1,4 @@
-const nextJest = require('next/jest');
+import nextJest from 'next/jest.js';
 
 const createJestConfig = nextJest({
   // next.config.jsとテスト環境用の.envファイルが配置されたディレクトリへのパス
@@ -12,7 +12,7 @@ const customJestConfig = {
   // テスト環境のセットアップファイル
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // テスト環境
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   // モジュール名のエイリアス
   moduleNameMapper: {
     // Handle CSS imports (with CSS modules)
@@ -25,4 +25,4 @@ const customJestConfig = {
 };
 
 // createJestConfigを使用することによって、next/jestが提供する設定とユーザー定義の設定がマージされる
-module.exports = createJestConfig(customJestConfig);
+export default createJestConfig(customJestConfig);
