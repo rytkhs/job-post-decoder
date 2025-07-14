@@ -66,14 +66,14 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/ogp.png',
-        width: 1200,
-        height: 630,
+        width: 680,
+        height: 680,
         alt: 'ブラック求人チェッカー | AI求人票解析ツール',
       },
     ],
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     site: '@tkhshkt',
     creator: '@tkhshkt',
     title: 'ブラック求人チェッカー | AI求人票解析ツール',
