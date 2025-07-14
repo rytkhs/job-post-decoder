@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     default: "ブラック求人チェッカー | AI求人票解析ツール",
     template: "%s | ブラック求人チェッカー",
   },
-  description: "求人票の甘い言葉に騙されるな！「アットホームな職場」「やりがいのある仕事」など、企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
+  description: "Protect Yourself from Bad Jobs.「アットホームな職場」「やりがいのある仕事」など、企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。",
   keywords: ["求人票", "AI解析", "転職", "ブラック求人", "ブラック企業", "求人チェック", "転職支援"],
   authors: [{ name: "ブラック求人チェッカー", url: "https://black-checker.vercel.app" }],
   creator: "ブラック求人チェッカー",
@@ -62,10 +62,10 @@ export const metadata: Metadata = {
     url: 'https://black-checker.vercel.app',
     siteName: 'ブラック求人チェッカー',
     title: 'ブラック求人チェッカー | AI求人票解析ツール',
-    description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
+    description: 'Protect Yourself from Bad Jobs. 企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
     images: [
       {
-        url: '/ogp.svg',
+        url: '/ogp.png',
         width: 1200,
         height: 630,
         alt: 'ブラック求人チェッカー | AI求人票解析ツール',
@@ -77,8 +77,8 @@ export const metadata: Metadata = {
     site: '@tkhshkt',
     creator: '@tkhshkt',
     title: 'ブラック求人チェッカー | AI求人票解析ツール',
-    description: '求人票の甘い言葉に騙されるな！企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
-    images: ['/ogp.svg'],
+    description: 'Protect Yourself from Bad Jobs. 企業の巧妙な表現をAIで解析し、隠された意味を明らかにするツールです。',
+    images: ['/ogp.png'],
   },
   icons: {
     icon: '/favicon.ico',
