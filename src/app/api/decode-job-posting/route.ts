@@ -3,7 +3,7 @@
  * 求人票テキストを受け取り、辛口キャリアアドバイザーの視点で解析し、結果を返すAPIルート
  */
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
