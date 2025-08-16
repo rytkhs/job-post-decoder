@@ -64,12 +64,12 @@ export default function Home() {
    */
   const simulateProgress = () => {
     const steps = [
-      { step: 'input' as const, progress: 5, message: '求人票を精査しています...', estimatedTime: 15 },
-      { step: 'analyzing' as const, progress: 15, message: '甘い言葉を特定中...', estimatedTime: 12 },
-      { step: 'analyzing' as const, progress: 35, message: 'ブラック要素を分析中...', estimatedTime: 9 },
-      { step: 'analyzing' as const, progress: 55, message: '企業の本音を推測中...', estimatedTime: 6 },
-      { step: 'analyzing' as const, progress: 75, message: '危険度を判定中...', estimatedTime: 4 },
-      { step: 'results' as const, progress: 90, message: '辛口診断を作成中...', estimatedTime: 2 },
+      { step: 'input' as const, progress: 5, message: '求人票を精査しています...', estimatedTime: 50 },
+      { step: 'analyzing' as const, progress: 15, message: '甘い言葉を特定中...', estimatedTime: 40 },
+      { step: 'analyzing' as const, progress: 35, message: 'ブラック要素を分析中...', estimatedTime: 30 },
+      { step: 'analyzing' as const, progress: 55, message: '企業の本音を推測中...', estimatedTime: 20 },
+      { step: 'analyzing' as const, progress: 75, message: '危険度を判定中...', estimatedTime: 12 },
+      { step: 'results' as const, progress: 90, message: '辛口診断を作成中...', estimatedTime: 6 },
       { step: 'insights' as const, progress: 100, message: '診断完了！', estimatedTime: 0 }
     ];
 
@@ -87,12 +87,12 @@ export default function Home() {
         currentStepIndex++;
 
         // より長い待機時間（10-15秒の処理に対応）
-        const delay = currentStepIndex === 1 ? 2000 :
-                     currentStepIndex === 2 ? 2500 :
-                     currentStepIndex === 3 ? 3000 :
-                     currentStepIndex === 4 ? 5000 :
-                     currentStepIndex === 5 ? 3000 :
-                     currentStepIndex === 6 ? 1500 : 500;
+        const delay = currentStepIndex === 1 ? 10000 :
+                     currentStepIndex === 2 ? 10000 :
+                     currentStepIndex === 3 ? 10000 :
+                     currentStepIndex === 4 ? 8000 :
+                     currentStepIndex === 5 ? 6000 :
+                     currentStepIndex === 6 ? 5000 : 500;
 
         setTimeout(updateProgress, delay);
       }
