@@ -12,7 +12,12 @@ import { JobPostingForm } from './components/JobPostingForm';
 import { CriticalDecodingResult } from './components/CriticalDecodingResult';
 import { Footer } from './components/Footer';
 import { useAppStore } from './store/appStore';
-import { APIErrorResponse } from './types/api';
+import {
+  APIErrorResponse,
+  CriticalAnalysisResponse,
+  EnhancedAPIResponse,
+  LLMResponse
+} from './types/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -124,17 +129,26 @@ export default function Home() {
         body: JSON.stringify({ text }),
       });
 
-      // APIレスポンスをJSONとして解析
-      const data = await response.json();
+      // サーバー応答を安全に解析 (JSON 以外の可能性も考慮)
+      let data: unknown;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        // 正常に JSON が返却された場合
+        data = await response.json();
+      } else {
+        // JSON 以外の場合はテキストとして読み取りエラー扱い
+        const rawText = await response.text();
+        throw new Error(rawText || 'サーバーから不正な応答が返されました。');
+      }
 
-      // レスポンスが正常でない場合はエラーを投げる
+      // エラーレスポンスの場合は例外を投げる
       if (!response.ok) {
         const errorData = data as APIErrorResponse;
         throw new Error(errorData.error || 'デコードに失敗しました。');
       }
 
       // 成功時は結果を状態に設定
-      setAnalysisResult(data);
+      setAnalysisResult(data as CriticalAnalysisResponse | EnhancedAPIResponse | LLMResponse);
 
       // 解析履歴に追加（求人票のタイトルを抽出して保存）
       // TODO: 辛口診断システム対応後に復活
