@@ -305,7 +305,7 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="max-w-4xl mx-auto"
             >
-              <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
+              <h2 className="text-2xl lg:text-4xl font-bold text-foreground mb-6">
                 求人票の
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">
                   甘い言葉

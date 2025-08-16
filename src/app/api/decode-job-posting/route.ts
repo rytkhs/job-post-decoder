@@ -458,7 +458,7 @@ class APIErrorClassifier {
  */
 async function fetchWithTimeout(
   openai: OpenAI,
-  requestParams: OpenAI.Chat.Completions.ChatCompletionCreateParams,
+  requestParams: OpenAI.Chat.Completions.ChatCompletionCreateParams & Record<string, unknown>,
   timeoutMs: number = REQUEST_TIMEOUT
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
   return new Promise((resolve, reject) => {
@@ -466,7 +466,7 @@ async function fetchWithTimeout(
       reject(new Error('Request timeout'));
     }, timeoutMs);
 
-    openai.chat.completions.create(requestParams)
+    openai.chat.completions.create(requestParams as OpenAI.Chat.Completions.ChatCompletionCreateParams)
       .then(response => {
         clearTimeout(timeoutId);
         if ('choices' in response && Array.isArray(response.choices)) {
@@ -546,18 +546,33 @@ export async function POST(request: Request) {
     // 4. プロンプトの生成
     const prompt = getSystemPrompt().replace('{jobPostingText}', body.text);
 
-    // 5. LLM APIの呼び出し（タイムアウト付き）
-    const response = await fetchWithTimeout(openai, {
-      model: process.env.MODEL_NAME || 'gpt-4o-mini',
+    // 5. リクエストパラメータの構築
+    const modelName = process.env.MODEL_NAME || 'google/gemini-2.5-flash';
+
+    const requestParams: OpenAI.Chat.Completions.ChatCompletionCreateParams & Record<string, unknown> = {
+      model: modelName,
       messages: [
         { role: 'system', content: prompt }
       ],
       temperature: 0.8,
       response_format: { type: 'json_object' },
       max_tokens: 10000,
-    });
+    };
 
-    // 6. レスポンスの取得とパース
+    // Gemini Flash (or other) reasoning 機能を有効化
+    if (modelName.includes('gemini-2.5-flash')) {
+      requestParams.reasoning = {
+        // medium: コストと精度のバランス
+        effort: 'medium',
+        // false にすると推論過程がレスポンスに含まれる
+        exclude: true
+      };
+    }
+
+    // 6. LLM APIの呼び出し（タイムアウト付き）
+    const response = await fetchWithTimeout(openai, requestParams);
+
+    // 7. レスポンスの取得とパース
     const content = response.choices[0]?.message.content;
 
     if (!content) {
@@ -569,7 +584,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 7. 安全なJSONパースの実行
+    // 8. 安全なJSONパースの実行
     const parseResult = SafeJSONParser.parseResponseContent(content);
 
     if (parseResult.success && parseResult.data) {
